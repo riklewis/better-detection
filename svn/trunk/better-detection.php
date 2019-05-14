@@ -54,6 +54,9 @@ function better_detect_show_settings() {
   echo '      <img src="' . WP_PLUGIN_URL . '/better-detection/header.png" style="height:64px;">';
   echo '    </a>';
   echo '  </div>';
+	echo '  <div style="margin:0 0 24px 0;">';
+  echo '    <a href="https://www.php.net/supported-versions.php" target="_blank"><img src="' . better_pass_badge_php() . '"></a>';
+  echo '  </div>';
   echo '  <h1>' . __('Better Detection', 'better-detect-text') . '</h1>';
   echo '  <form action="options.php" method="post">';
 
@@ -65,6 +68,18 @@ function better_detect_show_settings() {
   echo '    </tbody>';
   echo '  </table>';
   echo '</div>';
+}
+
+function better_pass_badge_php() {
+  $ver = phpversion();
+  $col = "critical";
+  if(version_compare($ver,'7.1','>=')) {
+    $col = "important";
+  }
+  if(version_compare($ver,'7.2','>=')) {
+    $col = "success";
+  }
+  return 'https://img.shields.io/badge/PHP-' . $ver . '-' . $col . '.svg?logo=php&style=for-the-badge';
 }
 
 //define output for settings section
