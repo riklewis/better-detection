@@ -15,6 +15,51 @@ Domain Path:  /languages
 defined('ABSPATH') or die('Forbidden');
 
 /*
+--------------------------- Installation ---------------------------
+*/
+
+define('BETTER_DETECT_VERSION','0.1');
+
+function better_detect_activation() {
+	global $wpdb;
+
+	//check the current version of the database
+	$dat_ver = get_option('better_detect_version') * 1;
+	$cur_ver = BETTER_DETECT_VERSION * 1;
+	$upgrade = ($cur_ver > $dat_ver);
+
+	//create table to store post/page hashes
+	$SQL = "CREATE TABLE better_detection_hashes (
+    hash_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+
+	  PRIMARY KEY (hash_id)
+	) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
+	better_detect_database('better_detection_hashes', $SQL, $upgrade);
+
+	//create table to store errors
+	$SQL = "CREATE TABLE better_detection_errors (
+    error_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+
+	  PRIMARY KEY (error_id)
+	) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
+	better_detect_database('better_detection_errors', $SQL, $upgrade);
+
+	//store latest version number
+	update_option('better_detect_version',BETTER_DETECT_VERSION);
+}
+register_activation_hook(__FILE__, 'better_detect_activation');
+
+function better_detect_database($table, $SQL, $upgrade) {
+	global $wpdb;
+
+	//table needs upgrading or table doesn't exist
+	if($upgrade || ($wpdb->get_var("SHOW TABLES LIKE '$table'") !== $table)) {
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($SQL);
+	}
+}
+
+/*
 ---------------------------- Detection -----------------------------
 */
 
