@@ -2,7 +2,7 @@
 /*
 Plugin Name:  Better Detection
 Description:  Improve the security of your website by detecting unexpected changes to both content and files
-Version:      1.0
+Version:      0.3
 Author:       Better Security
 Author URI:   https://bettersecurity.co
 License:      GPL3
@@ -18,45 +18,65 @@ defined('ABSPATH') or die('Forbidden');
 --------------------------- Installation ---------------------------
 */
 
-define('BETTER_DETECT_VERSION','0.1');
+define('BETTER_DETECT_VERSION','0.3');
 
 function better_detect_activation() {
 	global $wpdb;
 
-	//check the current version of the database
-	$dat_ver = get_option('better_detect_version') * 1;
-	$cur_ver = BETTER_DETECT_VERSION * 1;
-	$upgrade = ($cur_ver > $dat_ver);
-
 	//create table to store post/page hashes
-	$SQL = "CREATE TABLE better_detection_hashes (
+	$table = $wpdb->prefix . "better_detection_hashes";
+	$sql = "CREATE TABLE $table (
     hash_id int(10) unsigned NOT NULL AUTO_INCREMENT,
-
-	  PRIMARY KEY (hash_id)
-	) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
-	better_detect_database('better_detection_hashes', $SQL, $upgrade);
+    post_id bigint(20) unsigned,
+		filename varchar(255),
+		hash_value varchar(255) NOT NULL,
+		hash_date datetime NOT NULL,
+	  PRIMARY KEY  (hash_id)
+	)";
+	better_detect_database($table, $sql);
 
 	//create table to store errors
-	$SQL = "CREATE TABLE better_detection_errors (
+	$table = $wpdb->prefix . "better_detection_errors";
+	$sql = "CREATE TABLE $table (
     error_id int(10) unsigned NOT NULL AUTO_INCREMENT,
-
-	  PRIMARY KEY (error_id)
-	) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
-	better_detect_database('better_detection_errors', $SQL, $upgrade);
+		post_id bigint(20) unsigned,
+		filename varchar(255),
+		old_hash int(10) unsigned NOT NULL,
+		new_hash int(10) unsigned NOT NULL,
+		error_date datetime NOT NULL,
+		fixed_date datetime,
+	  PRIMARY KEY  (error_id)
+	)";
+	better_detect_database($table, $sql);
 
 	//store latest version number
 	update_option('better_detect_version',BETTER_DETECT_VERSION);
 }
 register_activation_hook(__FILE__, 'better_detect_activation');
 
-function better_detect_database($table, $SQL, $upgrade) {
+function better_detect_database($table, $sql) {
 	global $wpdb;
 
-	//table needs upgrading or table doesn't exist
-	if($upgrade || ($wpdb->get_var("SHOW TABLES LIKE '$table'") !== $table)) {
-		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-		dbDelta($SQL);
+  //check if table needs creating/updating
+	if($wpdb->get_var("SHOW TABLES LIKE '$table'") !== $table) {
+		$create = true;
+		$update = false;
 	}
+	else {
+		$dat_ver = get_option('better_detect_version') * 1;
+		$cur_ver = BETTER_DETECT_VERSION * 1;
+		$create = false;
+		$update = ($cur_ver > $dat_ver);
+	}
+
+	//table needs creating or updating
+	if($create || $update) {
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		dbDelta($sql . " " . $wpdb->get_charset_collate());
+		return true;
+	}
+
+	return false;
 }
 
 /*
@@ -67,7 +87,7 @@ function better_detect_database($table, $SQL, $upgrade) {
 
 /*
 ----------------------------- Settings ------------------------------
-*/
+*
 
 //add settings page
 function better_detect_menus() {
@@ -147,7 +167,7 @@ if(is_admin()) {
 
 /*
 --------------------- Add links to plugins page ---------------------
-*/
+*
 
 //show settings link
 function better_detect_links($links) {
