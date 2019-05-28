@@ -51,6 +51,11 @@ function better_detect_activation() {
 
 	//store latest version number
 	update_option('better_detect_version',BETTER_DETECT_VERSION);
+
+	//create scheduled task
+	if(!wp_next_scheduled('better_detection_hourly')) {
+	  wp_schedule_event(time(), 'hourly', 'better_detection_hourly');
+	}
 }
 register_activation_hook(__FILE__, 'better_detect_activation');
 
@@ -80,10 +85,25 @@ function better_detect_database($table, $sql) {
 }
 
 /*
+-------------------------- Uninstallation ---------------------------
+*/
+
+function better_detect_deactivation() {
+   //cancel scheduled tasks
+	 $timestamp = wp_next_scheduled('better_detection_hourly');
+   wp_unschedule_event($timestamp, 'better_detection_hourly');
+}
+register_deactivation_hook(__FILE__, 'better_detect_deactivation');
+
+/*
 ---------------------------- Detection -----------------------------
 */
 
-
+//scheduled task execution
+function better_detection_do_hourly() {
+	//todo
+}
+add_action( 'better_detection_hourly', 'better_detection_do_hourly' );
 
 /*
 ----------------------------- Settings ------------------------------
