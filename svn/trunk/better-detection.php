@@ -2,7 +2,7 @@
 /*
 Plugin Name:  Better Detection
 Description:  Improve the security of your website by detecting unexpected changes to both content and files
-Version:      0.3
+Version:      0.4
 Author:       Better Security
 Author URI:   https://bettersecurity.co
 License:      GPL3
@@ -18,7 +18,7 @@ defined('ABSPATH') or die('Forbidden');
 --------------------------- Installation ---------------------------
 */
 
-define('BETTER_DETECT_VERSION','0.3');
+define('BETTER_DETECT_VERSION','0.4');
 
 function better_detect_activation() {
 	global $wpdb;
@@ -30,6 +30,7 @@ function better_detect_activation() {
     post_id bigint(20) unsigned,
 		filename varchar(255),
 		hash_value varchar(255) NOT NULL,
+		hash_type varchar(20) NOT NULL,
 		hash_date datetime NOT NULL,
 	  PRIMARY KEY  (hash_id)
 	)";
@@ -101,7 +102,69 @@ register_deactivation_hook(__FILE__, 'better_detect_deactivation');
 
 //scheduled task execution
 function better_detection_do_hourly() {
-	//todo
+	global $wpdb;
+	$hashes = $wpdb->prefix . "better_detection_hashes";
+	$errors = $wpdb->prefix . "better_detection_errors";
+
+	//update options
+	update_option('better_detect_running','Y');
+	update_option('better_detect_runtime',date("Y-m-d H:i:s"));
+
+	//get posts to check
+  $rows = $wpdb->get_results("SELECT * FROM $wpdb->posts WHERE post_status IN ('draft','publish','future') ORDER BY RAND()" . (DISABLE_WP_CRON ? "" : " LIMIT 50"));
+	foreach($rows as $row) {
+    $post_id = $row->ID;
+		$content = $row->post_content;
+    $newhash = hash("sha256",$content);
+
+		//check if has exists
+    $rowhash = $wpdb->get_row("SELECT * FROM $hashes WHERE post_id = $post_id" );
+		if($rowhash!==null) {
+			//check if hash has changed
+			$oldhash = $rowhash->hash_value;
+      if($oldhash!==$newhash) {
+				//save new hash value
+				$wpdb->replace($hashes,
+					array(
+						'hash_id' => $rowhash->hash_id,
+						'post_id' => $post_id,
+						'hash_value' => $newhash,
+						'hash_type' => 'sha256',
+						'hash_date' => date("Y-m-d H:i:s")
+					)
+				);
+
+				//save hash error
+				$wpdb->insert($errors,
+					array(
+						'post_id' => $post_id,
+						'old_hash' => $oldhash,
+						'new_hash' => $newhash,
+						'error_date' => date("Y-m-d H:i:s")
+					)
+				);
+
+				//send notification
+				//todo
+			}
+		}
+		else {
+      //save new hash value
+			$wpdb->insert($hashes,
+				array(
+					'post_id' => $post_id,
+					'filename' => '',
+					'hash_value' => $newhash,
+					'hash_type' => 'sha256',
+					'hash_date' => date("Y-m-d H:i:s")
+				)
+			);
+		}
+	}
+
+	//update options
+	update_option('better_detect_running','N');
+	update_option('better_detect_endtime',date("Y-m-d H:i:s"));
 }
 add_action( 'better_detection_hourly', 'better_detection_do_hourly' );
 
