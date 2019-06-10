@@ -146,8 +146,8 @@ function better_detection_do_hourly() {
 					)
 				);
 
-				//send notification
-				//todo
+				//send notifications
+				better_detect_do_notify();
 			}
 		}
 		else {
@@ -183,7 +183,7 @@ function better_detect_log($message) {
 
 /*
 ----------------------------- Settings ------------------------------
-*
+*/
 
 //add settings page
 function better_detect_menus() {
@@ -194,15 +194,13 @@ function better_detect_menus() {
 function better_detect_settings() {
 	register_setting('better-detection','better-detection-settings');
 
-  add_settings_section('better-detection-section-rp', __('Referrer Policy', 'better-detect-text'), 'better_detect_section_rp', 'better-detection');
-  add_settings_field('better-detection-rp', __('Referrer Policy', 'better-detect-text'), 'better_detect_rp', 'better-detection', 'better-detection-section-rp');
-
-  //todo
+  add_settings_section('better-detection-section-notify', __('Notifications', 'better-detect-text'), 'better_detect_section_notify', 'better-detection');
+  add_settings_field('better-detection-notify-email', __('Email Address', 'better-detect-text'), 'better_detect_notify_email', 'better-detection', 'better-detection-section-notify');
 }
 
 //allow the settings to be stored
 add_filter('whitelist_options', function($whitelist_options) {
-  $whitelist_options['better-detection'][] = 'better-detection-rp';
+  $whitelist_options['better-detection'][] = 'better-detection-notify-email';
   //todo
   return $whitelist_options;
 });
@@ -216,7 +214,7 @@ function better_detect_show_settings() {
   echo '    </a>';
   echo '  </div>';
 	echo '  <div style="margin:0 0 24px 0;">';
-  echo '    <a href="https://www.php.net/supported-versions.php" target="_blank"><img src="' . better_pass_badge_php() . '"></a>';
+  echo '    <a href="https://www.php.net/supported-versions.php" target="_blank"><img src="' . better_detect_badge_php() . '"></a>';
   echo '  </div>';
   echo '  <h1>' . __('Better Detection', 'better-detect-text') . '</h1>';
   echo '  <form action="options.php" method="post">';
@@ -231,7 +229,7 @@ function better_detect_show_settings() {
   echo '</div>';
 }
 
-function better_pass_badge_php() {
+function better_detect_badge_php() {
   $ver = phpversion();
   $col = "critical";
   if(version_compare($ver,'7.1','>=')) {
@@ -244,15 +242,51 @@ function better_pass_badge_php() {
 }
 
 //define output for settings section
-function better_detect_section_rp() {
+function better_detect_section_notify() {
   echo '<hr>';
 }
 
 //defined output for settings
-function better_detect_rp() {
+function better_detect_notify_email() {
 	$settings = get_option('better-detection-settings');
-	$value = ($settings['better-detection-rp'] ?: "");
-  //todo
+	$value = "";
+	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
+		$value = $settings['better-detection-notify-email'];
+	}
+  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-email]" type="email" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
+}
+
+function better_detect_do_notify() {
+	$settings = get_option('better-detection-settings');
+	$value = "";
+	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
+		$value = $settings['better-detection-notify-email'];
+		if($value!=="") {
+      //calculate site domain
+      $link = rtrim(home_url('/','https'),'/');
+			if(strpos($link,'https://')===0) {
+		    $link = substr($link,8);
+		  }
+		  if(strpos($link,'http://')===0) {
+		    $link = substr($link,7);
+		  }
+		  if(strpos($link,'www.')===0) {
+		    $link = substr($link,4);
+		  }
+
+      //create email body
+			$body = "<h1>ALERT</h1><p>Shit has happened!</p>";
+
+      //send HTML email
+			add_filter('wp_mail_content_type','better_detect_set_html_mail_content_type');
+			wp_mail($value,"ALERT from Better Detection - $link",$body);
+			remove_filter('wp_mail_content_type','better_detect_set_html_mail_content_type');
+		}
+	}
+}
+
+function better_detect_set_html_mail_content_type() {
+	return 'text/html';
 }
 
 //add actions
@@ -263,7 +297,7 @@ if(is_admin()) {
 
 /*
 --------------------- Add links to plugins page ---------------------
-*
+*/
 
 //show settings link
 function better_detect_links($links) {
