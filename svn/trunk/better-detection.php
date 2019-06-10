@@ -2,7 +2,7 @@
 /*
 Plugin Name:  Better Detection
 Description:  Improve the security of your website by detecting unexpected changes to both content and files
-Version:      0.4
+Version:      0.5
 Author:       Better Security
 Author URI:   https://bettersecurity.co
 License:      GPL3
@@ -18,7 +18,7 @@ defined('ABSPATH') or die('Forbidden');
 --------------------------- Installation ---------------------------
 */
 
-define('BETTER_DETECT_VERSION','0.4');
+define('BETTER_DETECT_VERSION','0.5');
 
 function better_detect_activation() {
 	global $wpdb;
@@ -42,8 +42,8 @@ function better_detect_activation() {
     error_id int(10) unsigned NOT NULL AUTO_INCREMENT,
 		post_id bigint(20) unsigned,
 		filename varchar(255),
-		old_hash int(10) unsigned NOT NULL,
-		new_hash int(10) unsigned NOT NULL,
+		old_hash varchar(255) NOT NULL,
+		new_hash varchar(255) NOT NULL,
 		error_date datetime NOT NULL,
 		fixed_date datetime,
 	  PRIMARY KEY  (error_id)
@@ -111,14 +111,16 @@ function better_detection_do_hourly() {
 	update_option('better_detect_runtime',date("Y-m-d H:i:s"));
 
 	//get posts to check
-  $rows = $wpdb->get_results("SELECT * FROM $wpdb->posts WHERE post_status IN ('draft','publish','future') ORDER BY RAND()" . (DISABLE_WP_CRON ? "" : " LIMIT 50"));
+	$sql = "SELECT * FROM $wpdb->posts WHERE post_status IN ('draft','publish','future') ORDER BY RAND()";
+  $rows = $wpdb->get_results($sql);
 	foreach($rows as $row) {
     $post_id = $row->ID;
 		$content = $row->post_content;
     $newhash = hash("sha256",$content);
 
 		//check if has exists
-    $rowhash = $wpdb->get_row("SELECT * FROM $hashes WHERE post_id = $post_id" );
+		$sql = "SELECT * FROM $hashes WHERE post_id = $post_id";
+    $rowhash = $wpdb->get_row($sql);
 		if($rowhash!==null) {
 			//check if hash has changed
 			$oldhash = $rowhash->hash_value;
@@ -167,6 +169,17 @@ function better_detection_do_hourly() {
 	update_option('better_detect_endtime',date("Y-m-d H:i:s"));
 }
 add_action( 'better_detection_hourly', 'better_detection_do_hourly' );
+
+function better_detect_log($message) {
+  if (WP_DEBUG === true) {
+    if (is_array($message) || is_object($message)) {
+      error_log(print_r($message, true));
+    }
+		else {
+      error_log($message);
+    }
+  }
+}
 
 /*
 ----------------------------- Settings ------------------------------
