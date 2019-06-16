@@ -334,20 +334,51 @@ function better_detect_do_notify($type,$item_id) {
 			switch($type) {
 				case "post":
 					$item = get_post($item_id);
-				  $text = $item->post_type . ' <' . get_permalink($item_id) . '|' . $item->post_title . '>.';
-					$text .= ' ID: ' . $item->ID . ', status: ' . $item->post_status . ', post date: ' . date($frmt, strtotime($item->post_date)) . ', last modified: ' . date($frmt, strtotime($item->post_modified)) . '.';
+				  $text = $item->post_type;
+					$atts = array([
+		        'fallback' => 'ALERT from <' . $home . '|' . $link . '> - change detected to ' . $item->post_type . ' <' . get_permalink($item_id) . '|' . $item->post_title . '>',
+		        'color' => '#000000',
+						'title' => $item->post_title,
+            'title_link' => get_permalink($item_id),
+						'footer' => 'Better Security',
+						'footer_icon' => 'https://bettersecurity.co/images/icon-48x48.png',
+		        'fields' => array(
+		          [
+                'title' => 'ID',
+                'value' => $item->ID,
+                'short' => true
+		          ],
+							[
+								'title' => 'Post Date',
+								'value' => date($frmt, strtotime($item->post_date)),
+								'short' => true
+							],
+		          [
+                'title' => 'Status',
+                'value' => ucwords($item->post_status),
+                'short' => true
+		          ],
+							[
+								'title' => 'Last Modified',
+								'value' => date($frmt, strtotime($item->post_modified)),
+								'short' => true
+							]
+		        )
+		      ]);
 					break;
 				default:
-          $text = $type . ', ID: ' . $item_id . '.';
+          $text = $type . ' (ID: ' . $item_id . ')';
+					$atts = array();
 			}
 
 			//post message to Slack
       wp_remote_post($value,array(
 				'blocking' => false,
 				'body' => json_encode(array(
-					'text' => 'ALERT from <' . $home . '|' . $link . '> - change detected to ' . $text . '  If this is not expected, please investigate.',
+					'text' => 'ALERT from <' . $home . '|' . $link . '> - change detected to ' . $text . '.  If this is not expected, please investigate.',
 					'username' => 'Better Detection',
-					'icon_url' => 'https://bettersecurity.co/images/icon-48x48.png'
+					'icon_url' => 'https://bettersecurity.co/images/icon-48x48.png',
+					'attachments' => $atts
 				))
 			));
 		}
