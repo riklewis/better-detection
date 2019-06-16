@@ -196,11 +196,13 @@ function better_detect_settings() {
 
   add_settings_section('better-detection-section-notify', __('Notifications', 'better-detect-text'), 'better_detect_section_notify', 'better-detection');
   add_settings_field('better-detection-notify-email', __('Email Address', 'better-detect-text'), 'better_detect_notify_email', 'better-detection', 'better-detection-section-notify');
+  add_settings_field('better-detection-notify-slack', __('Slack WebHook URL', 'better-detect-text'), 'better_detect_notify_slack', 'better-detection', 'better-detection-section-notify');
 }
 
 //allow the settings to be stored
 add_filter('whitelist_options', function($whitelist_options) {
   $whitelist_options['better-detection'][] = 'better-detection-notify-email';
+  $whitelist_options['better-detection'][] = 'better-detection-notify-slack';
   //todo
   return $whitelist_options;
 });
@@ -257,23 +259,38 @@ function better_detect_notify_email() {
   echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-email]" type="email" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
 }
 
+function better_detect_notify_slack() {
+	$settings = get_option('better-detection-settings');
+	$value = "";
+	if(isset($settings['better-detection-notify-slack']) && $settings['better-detection-notify-slack']!=="") {
+		$value = $settings['better-detection-notify-slack'];
+	}
+  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-slack]" type="url" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
+	echo '<br><small><em>See Slack\'s <a href="https://slack.com/services/new/incoming-webhook">Channel Settings &gt; Add an App &gt; Incoming WebHooks</a> menu.</em></small>';
+}
+
 function better_detect_do_notify($type,$item_id) {
 	$settings = get_option('better-detection-settings');
 	$value = "";
+
+	//calculate site domain
+	$link = rtrim(home_url('/','https'),'/');
+	$home = $link;
+	if(strpos($link,'https://')===0) {
+		$link = substr($link,8);
+	}
+	if(strpos($link,'http://')===0) {
+		$link = substr($link,7);
+	}
+	if(strpos($link,'www.')===0) {
+		$link = substr($link,4);
+	}
+	$frmt = get_option('time_format') . ' ' . get_option('date_format');
+
+	//check for email address
 	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
 		$value = $settings['better-detection-notify-email'];
 		if($value!=="") {
-      //calculate site domain
-      $link = rtrim(home_url('/','https'),'/');
-			if(strpos($link,'https://')===0) {
-		    $link = substr($link,8);
-		  }
-		  if(strpos($link,'http://')===0) {
-		    $link = substr($link,7);
-		  }
-		  if(strpos($link,'www.')===0) {
-		    $link = substr($link,4);
-		  }
 
       //create email body
 			$body  = '  <div style="background-color:white;margin:24px 0;">';
@@ -286,9 +303,8 @@ function better_detect_do_notify($type,$item_id) {
 			switch($type) {
 				case "post":
 					$item = get_post($item_id);
-					$frmt = get_option('time_format') . ', ' . get_option('date_format');
 					$body .= '  <li>Type: <strong>' . ucwords($item->post_type) . '</strong></li>';
-					$body .= '  <li>Title: <strong>' . $item->post_title . '</strong></li>';
+					$body .= '  <li>Title: <strong><a href="' . get_permalink($item_id) . '">' . $item->post_title . '</a></strong></li>';
 					$body .= '  <li>ID: <strong>' . $item->ID . '</strong></li>';
 					$body .= '  <li>Status: <strong>' . ucwords($item->post_status) . '</strong></li>';
 					$body .= '  <li>Post Date: <strong>' . date($frmt, strtotime($item->post_date)) . '</strong></li>';
@@ -306,6 +322,34 @@ function better_detect_do_notify($type,$item_id) {
 			add_filter('wp_mail_content_type','better_detect_set_html_mail_content_type');
 			wp_mail($value,"ALERT from Better Detection - $link",$body);
 			remove_filter('wp_mail_content_type','better_detect_set_html_mail_content_type');
+		}
+	}
+
+	//check for Slack webhook
+	if(isset($settings['better-detection-notify-slack']) && $settings['better-detection-notify-slack']!=="") {
+		$value = $settings['better-detection-notify-slack'];
+		if($value!=="") {
+
+			//create message text
+			switch($type) {
+				case "post":
+					$item = get_post($item_id);
+				  $text = $item->post_type . ' <' . get_permalink($item_id) . '|' . $item->post_title . '>.';
+					$text .= ' ID: ' . $item->ID . ', status: ' . $item->post_status . ', post date: ' . date($frmt, strtotime($item->post_date)) . ', last modified: ' . date($frmt, strtotime($item->post_modified)) . '.';
+					break;
+				default:
+          $text = $type . ', ID: ' . $item_id . '.';
+			}
+
+			//post message to Slack
+      wp_remote_post($value,array(
+				'blocking' => false,
+				'body' => json_encode(array(
+					'text' => 'ALERT from <' . $home . '|' . $link . '> - change detected to ' . $text . '  If this is not expected, please investigate.',
+					'username' => 'Better Detection',
+					'icon_url' => 'https://bettersecurity.co/images/icon-48x48.png'
+				))
+			));
 		}
 	}
 }
