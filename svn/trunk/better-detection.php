@@ -147,7 +147,7 @@ function better_detection_do_hourly() {
 				);
 
 				//send notifications
-				better_detect_do_notify();
+				better_detect_do_notify('post',$post_id);
 			}
 		}
 		else {
@@ -217,6 +217,7 @@ function better_detect_show_settings() {
   echo '    <a href="https://www.php.net/supported-versions.php" target="_blank"><img src="' . better_detect_badge_php() . '"></a>';
   echo '  </div>';
   echo '  <h1>' . __('Better Detection', 'better-detect-text') . '</h1>';
+	echo '  <p>This plugin will create and store hashes of content and critical files, and monitor these moving forwards in order to detect when changes occur.  When changes are made outside of the normal working process, such as a direct database update, this will then be detected as the hash will get out of sync with the content.';
   echo '  <form action="options.php" method="post">';
 
 	settings_fields('better-detection');
@@ -256,7 +257,7 @@ function better_detect_notify_email() {
   echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-email]" type="email" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
 }
 
-function better_detect_do_notify() {
+function better_detect_do_notify($type,$item_id) {
 	$settings = get_option('better-detection-settings');
 	$value = "";
 	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
@@ -275,7 +276,31 @@ function better_detect_do_notify() {
 		  }
 
       //create email body
-			$body = "<h1>ALERT</h1><p>Shit has happened!</p>";
+			$body  = '  <div style="background-color:white;margin:24px 0;">';
+			$body .= '    <a href="https://bettersecurity.co" target="_blank" style="display:inline-block;width:100%;">';
+			$body .= '      <img src="' . WP_PLUGIN_URL . '/better-detection/header.png" style="height:64px;">';
+			$body .= '    </a>';
+			$body .= '  </div>';
+			$body .= '  <p>You have the <strong>Better Detection</strong> plugin installed on your Wordpress site and it has detected that a change was made outside of the normal working process, such as a direct database update.  The details of the change are below:</p>';
+			$body .= '  <p><ul>';
+			switch($type) {
+				case "post":
+					$item = get_post($item_id);
+					$frmt = get_option('time_format') . ', ' . get_option('date_format');
+					$body .= '  <li>Type: <strong>' . ucwords($item->post_type) . '</strong></li>';
+					$body .= '  <li>Title: <strong>' . $item->post_title . '</strong></li>';
+					$body .= '  <li>ID: <strong>' . $item->ID . '</strong></li>';
+					$body .= '  <li>Status: <strong>' . ucwords($item->post_status) . '</strong></li>';
+					$body .= '  <li>Post Date: <strong>' . date($frmt, strtotime($item->post_date)) . '</strong></li>';
+					$body .= '  <li>Last Modified: <strong>' . date($frmt, strtotime($item->post_modified)) . '</strong></li>';
+					break;
+				default:
+					$body .= '  <li>Unknown type: <strong>' . $type . '</strong> (ID: ' . $item_id . ')</li>';
+			}
+			$body .= '  </ul></p>';
+			$body .= '  <p>If you recognise this change as one that you made then please ignore this email.  However, you may want to investigate to be sure that you are happy with the change that has been made.</p>';
+			$body .= '  <p>We just want to take this opportunity to thank you for using this plugin and we hope that you find it useful.</p>';
+			$body .= '  <p>All the best, the <strong>Better Security</strong> team</p>';
 
       //send HTML email
 			add_filter('wp_mail_content_type','better_detect_set_html_mail_content_type');
