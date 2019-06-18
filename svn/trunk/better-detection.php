@@ -180,123 +180,6 @@ function better_detection_do_post($item,$boo) {
 	}
 }
 
-//update when posted in admin only
-function better_detection_updated_messages($messages) {
-  global $post;
-
-	//append tagline to all messages
-  $type = $post->post_type;
-  $mess = " <img src='" . WP_PLUGIN_URL . "/better-detection/icon-36x36.png' align='top' style='height:18px;margin:0 4px 0 18px;'>Protected by <strong>Better Detection</stong>";
-	for($i=1;$i<11;$i++) {
-		$messages[$type][$i] .= $mess;
-	}
-
-  //process post
-	better_detection_do_post($post,false);
-
-  return $messages;
-}
-add_filter('post_updated_messages', 'better_detection_updated_messages');
-
-function better_detect_log($message) {
-  if (WP_DEBUG === true) {
-    if (is_array($message) || is_object($message)) {
-      error_log(print_r($message, true));
-    }
-		else {
-      error_log($message);
-    }
-  }
-}
-
-/*
------------------------------ Settings ------------------------------
-*/
-
-//add settings page
-function better_detect_menus() {
-	add_options_page(__('Better Detection','better-detect-text'), __('Better Detection','better-detect-text'), 'manage_options', 'better-detection-settings', 'better_detect_show_settings');
-}
-
-//add the settings
-function better_detect_settings() {
-	register_setting('better-detection','better-detection-settings');
-
-  add_settings_section('better-detection-section-notify', __('Notifications', 'better-detect-text'), 'better_detect_section_notify', 'better-detection');
-  add_settings_field('better-detection-notify-email', __('Email Address', 'better-detect-text'), 'better_detect_notify_email', 'better-detection', 'better-detection-section-notify');
-  add_settings_field('better-detection-notify-slack', __('Slack WebHook URL', 'better-detect-text'), 'better_detect_notify_slack', 'better-detection', 'better-detection-section-notify');
-}
-
-//allow the settings to be stored
-add_filter('whitelist_options', function($whitelist_options) {
-  $whitelist_options['better-detection'][] = 'better-detection-notify-email';
-  $whitelist_options['better-detection'][] = 'better-detection-notify-slack';
-  //todo
-  return $whitelist_options;
-});
-
-//define output for settings page
-function better_detect_show_settings() {
-  echo '<div class="wrap">';
-  echo '  <div style="padding:12px;background-color:white;margin:24px 0;">';
-  echo '    <a href="https://bettersecurity.co" target="_blank" style="display:inline-block;width:100%;">';
-  echo '      <img src="' . WP_PLUGIN_URL . '/better-detection/header.png" style="height:64px;">';
-  echo '    </a>';
-  echo '  </div>';
-	echo '  <div style="margin:0 0 24px 0;">';
-  echo '    <a href="https://www.php.net/supported-versions.php" target="_blank"><img src="' . better_detect_badge_php() . '"></a>';
-  echo '  </div>';
-  echo '  <h1>' . __('Better Detection', 'better-detect-text') . '</h1>';
-	echo '  <p>This plugin will create and store hashes of content and critical files, and monitor these moving forwards in order to detect when changes occur.  When changes are made outside of the normal working process, such as a direct database update, this will then be detected as the hash will get out of sync with the content.';
-  echo '  <form action="options.php" method="post">';
-
-	settings_fields('better-detection');
-  do_settings_sections('better-detection');
-	submit_button();
-
-  echo '  </form>';
-  echo '    </tbody>';
-  echo '  </table>';
-  echo '</div>';
-}
-
-function better_detect_badge_php() {
-  $ver = phpversion();
-  $col = "critical";
-  if(version_compare($ver,'7.1','>=')) {
-    $col = "important";
-  }
-  if(version_compare($ver,'7.2','>=')) {
-    $col = "success";
-  }
-  return 'https://img.shields.io/badge/PHP-' . $ver . '-' . $col . '.svg?logo=php&style=for-the-badge';
-}
-
-//define output for settings section
-function better_detect_section_notify() {
-  echo '<hr>';
-}
-
-//defined output for settings
-function better_detect_notify_email() {
-	$settings = get_option('better-detection-settings');
-	$value = "";
-	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
-		$value = $settings['better-detection-notify-email'];
-	}
-  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-email]" type="email" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
-}
-
-function better_detect_notify_slack() {
-	$settings = get_option('better-detection-settings');
-	$value = "";
-	if(isset($settings['better-detection-notify-slack']) && $settings['better-detection-notify-slack']!=="") {
-		$value = $settings['better-detection-notify-slack'];
-	}
-  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-slack]" type="url" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
-	echo '<br><small><em>See Slack\'s <a href="https://slack.com/services/new/incoming-webhook">Channel Settings &gt; Add an App &gt; Incoming WebHooks</a> menu.</em></small>';
-}
-
 function better_detect_do_notify($type,$item_id) {
 	$settings = get_option('better-detection-settings');
 	$value = "";
@@ -413,8 +296,128 @@ function better_detect_do_notify($type,$item_id) {
 	}
 }
 
+//set email as HTML
 function better_detect_set_html_mail_content_type() {
 	return 'text/html';
+}
+
+//update when posted in admin only
+function better_detection_updated_messages($messages) {
+  global $post;
+
+	//append tagline to all messages
+  $type = $post->post_type;
+  $mess = " <img src='" . WP_PLUGIN_URL . "/better-detection/icon-36x36.png' align='top' style='height:18px;margin:0 4px 0 18px;'>Protected by <strong>Better Detection</stong>";
+	for($i=1;$i<11;$i++) {
+		$messages[$type][$i] .= $mess;
+	}
+
+  //process post
+	better_detection_do_post($post,false);
+
+  return $messages;
+}
+add_filter('post_updated_messages', 'better_detection_updated_messages');
+
+
+//debug logging if required
+function better_detect_log($message) {
+  if (WP_DEBUG === true) {
+    if (is_array($message) || is_object($message)) {
+      error_log(print_r($message, true));
+    }
+		else {
+      error_log($message);
+    }
+  }
+}
+
+/*
+----------------------------- Settings ------------------------------
+*/
+
+//add settings page
+function better_detect_menus() {
+	add_options_page(__('Better Detection','better-detect-text'), __('Better Detection','better-detect-text'), 'manage_options', 'better-detection-settings', 'better_detect_show_settings');
+}
+
+//add the settings
+function better_detect_settings() {
+	register_setting('better-detection','better-detection-settings');
+
+  add_settings_section('better-detection-section-notify', __('Notifications', 'better-detect-text'), 'better_detect_section_notify', 'better-detection');
+  add_settings_field('better-detection-notify-email', __('Email Address', 'better-detect-text'), 'better_detect_notify_email', 'better-detection', 'better-detection-section-notify');
+  add_settings_field('better-detection-notify-slack', __('Slack WebHook URL', 'better-detect-text'), 'better_detect_notify_slack', 'better-detection', 'better-detection-section-notify');
+}
+
+//allow the settings to be stored
+add_filter('whitelist_options', function($whitelist_options) {
+  $whitelist_options['better-detection'][] = 'better-detection-notify-email';
+  $whitelist_options['better-detection'][] = 'better-detection-notify-slack';
+  //todo
+  return $whitelist_options;
+});
+
+//define output for settings page
+function better_detect_show_settings() {
+  echo '<div class="wrap">';
+  echo '  <div style="padding:12px;background-color:white;margin:24px 0;">';
+  echo '    <a href="https://bettersecurity.co" target="_blank" style="display:inline-block;width:100%;">';
+  echo '      <img src="' . WP_PLUGIN_URL . '/better-detection/header.png" style="height:64px;">';
+  echo '    </a>';
+  echo '  </div>';
+	echo '  <div style="margin:0 0 24px 0;">';
+  echo '    <a href="https://www.php.net/supported-versions.php" target="_blank"><img src="' . better_detect_badge_php() . '"></a>';
+  echo '  </div>';
+  echo '  <h1>' . __('Better Detection', 'better-detect-text') . '</h1>';
+	echo '  <p>This plugin will create and store hashes of content and critical files, and monitor these moving forwards in order to detect when changes occur.  When changes are made outside of the normal working process, such as a direct database update, this will then be detected as the hash will get out of sync with the content.';
+  echo '  <form action="options.php" method="post">';
+
+	settings_fields('better-detection');
+  do_settings_sections('better-detection');
+	submit_button();
+
+  echo '  </form>';
+  echo '    </tbody>';
+  echo '  </table>';
+  echo '</div>';
+}
+
+function better_detect_badge_php() {
+  $ver = phpversion();
+  $col = "critical";
+  if(version_compare($ver,'7.1','>=')) {
+    $col = "important";
+  }
+  if(version_compare($ver,'7.2','>=')) {
+    $col = "success";
+  }
+  return 'https://img.shields.io/badge/PHP-' . $ver . '-' . $col . '.svg?logo=php&style=for-the-badge';
+}
+
+//define output for settings section
+function better_detect_section_notify() {
+  echo '<hr>';
+}
+
+//defined output for settings
+function better_detect_notify_email() {
+	$settings = get_option('better-detection-settings');
+	$value = "";
+	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
+		$value = $settings['better-detection-notify-email'];
+	}
+  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-email]" type="email" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
+}
+
+function better_detect_notify_slack() {
+	$settings = get_option('better-detection-settings');
+	$value = "";
+	if(isset($settings['better-detection-notify-slack']) && $settings['better-detection-notify-slack']!=="") {
+		$value = $settings['better-detection-notify-slack'];
+	}
+  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-slack]" type="url" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
+	echo '<br><small><em>See Slack\'s <a href="https://slack.com/services/new/incoming-webhook">Channel Settings &gt; Add an App &gt; Incoming WebHooks</a> menu.</em></small>';
 }
 
 //add actions
