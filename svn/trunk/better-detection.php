@@ -336,6 +336,14 @@ function better_detect_log($message) {
 ----------------------------- Settings ------------------------------
 */
 
+function better_detection_admin_scripts() {
+  wp_enqueue_script('jquery-ui-core');
+  wp_enqueue_script('jquery-ui-tabs');
+	wp_enqueue_style('jquery-ui-tabs-min-css', WP_PLUGIN_URL . '/better-detection/jquery-ui-tabs.min.css');
+}
+
+add_action('admin_enqueue_scripts', 'better_detection_admin_scripts');
+
 //add settings page
 function better_detect_menus() {
 	add_options_page(__('Better Detection','better-detect-text'), __('Better Detection','better-detect-text'), 'manage_options', 'better-detection-settings', 'better_detect_show_settings');
@@ -371,16 +379,28 @@ function better_detect_show_settings() {
   echo '  </div>';
   echo '  <h1>' . __('Better Detection', 'better-detect-text') . '</h1>';
 	echo '  <p>This plugin will create and store hashes of content and critical files, and monitor these moving forwards in order to detect when changes occur.  When changes are made outside of the normal working process, such as a direct database update, this will then be detected as the hash will get out of sync with the content.';
-  echo '  <form action="options.php" method="post">';
-
+  echo '  <div id="better-detection-tabs">';
+  echo '    <ul>';
+  echo '      <li><a href="#better-detection-tabs-errors">Errors<span id="better-detection-error-count"></span></a></li>';
+  echo '      <li><a href="#better-detection-tabs-settings">Options</a></li>';
+  echo '      <li><a href="#better-detection-tabs-extras">Extras</a></li>';
+  echo '    </ul>';
+  echo '    <div id="better-detection-tabs-errors">';
+	//todo
+	echo '    </div>';
+	echo '    <div id="better-detection-tabs-settings">';
+	echo '      <form action="options.php" method="post">';
 	settings_fields('better-detection');
   do_settings_sections('better-detection');
 	submit_button();
-
-  echo '  </form>';
-  echo '    </tbody>';
-  echo '  </table>';
+  echo '      </form>';
+	echo '    </div>';
+	echo '    <div id="better-detection-tabs-extras">';
+	//todo
+	echo '    </div>';
+	echo '  </div>';
   echo '</div>';
+  echo '<script>jQuery(function(){jQuery("#better-detection-tabs").tabs();});</script>';
 }
 
 function better_detect_badge_php() {
@@ -444,7 +464,7 @@ function better_detection_admin_bar_render() {
 			'id' => 'better-detection',
 			'title' => "<img src='" . WP_PLUGIN_URL . "/better-detection/icon-white-36x36.png' align='top' style='height:18px;margin:0 4px 0 0;position:relative;top:6px;'>Better Detection ($count)",
 			'href' => admin_url('options-general.php') . '?page=better-detection-settings',
-			'meta' => false // array of any of the following options: array( 'html' => '', 'class' => '', 'onclick' => '', target => '', title => '' );
+			'meta' => false
 		));
 	}
 }
