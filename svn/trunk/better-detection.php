@@ -127,11 +127,12 @@ function better_detection_do_post($item,$boo) {
 	$hashes = $wpdb->prefix . "better_detection_hashes";
 	$errors = $wpdb->prefix . "better_detection_errors";
 
+  //get post content and calculate hash
 	$post_id = $item->ID;
 	$content = $item->post_content;
 	$newhash = hash("sha256",$content);
 
-	//check if has exists
+	//check if hash exists for this post
 	$sql = "SELECT * FROM $hashes WHERE post_id = $post_id";
 	$rowhash = $wpdb->get_row($sql);
 	if($rowhash!==null) {
