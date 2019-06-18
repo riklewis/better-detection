@@ -427,6 +427,30 @@ if(is_admin()) {
 }
 
 /*
+----------------------- Add link to admin bar ----------------------
+*/
+
+//add link to the admin bar
+function better_detection_admin_bar_render() {
+	global $wp_admin_bar;
+	global $wpdb;
+	$errors = $wpdb->prefix . "better_detection_errors";
+
+	//check if unfixed errors
+	$count = $wpdb->get_var("SELECT COUNT(*) FROM $errors WHERE fixed_date IS NULL");
+	if($count>0) {
+		$wp_admin_bar->add_menu(array(
+			'parent' => false,
+			'id' => 'better-detection',
+			'title' => "<img src='" . WP_PLUGIN_URL . "/better-detection/icon-white-36x36.png' align='top' style='height:18px;margin:0 4px 0 0;position:relative;top:6px;'>Better Detection ($count)",
+			'href' => admin_url('options-general.php') . '?page=better-detection-settings',
+			'meta' => false // array of any of the following options: array( 'html' => '', 'class' => '', 'onclick' => '', target => '', title => '' );
+		));
+	}
+}
+add_action('wp_before_admin_bar_render', 'better_detection_admin_bar_render');
+
+/*
 --------------------- Add links to plugins page ---------------------
 */
 
