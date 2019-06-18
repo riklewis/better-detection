@@ -285,7 +285,7 @@ function better_detect_do_notify($type,$item_id) {
 	if(strpos($link,'www.')===0) {
 		$link = substr($link,4);
 	}
-	$frmt = get_option('time_format') . ' ' . get_option('date_format');
+	$frmt = get_option('time_format') . ', ' . get_option('date_format');
 
 	//check for email address
 	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
