@@ -103,39 +103,53 @@ register_deactivation_hook(__FILE__, 'better_detect_deactivation');
 //scheduled task execution
 function better_detection_do_hourly() {
 	global $wpdb;
-	$hashes = $wpdb->prefix . "better_detection_hashes";
-	$errors = $wpdb->prefix . "better_detection_errors";
 
 	//update options
 	update_option('better_detect_running','Y');
 	update_option('better_detect_runtime',date("Y-m-d H:i:s"));
 
 	//get posts to check
-	$sql = "SELECT * FROM $wpdb->posts WHERE post_status IN ('draft','publish','future') ORDER BY RAND()";
+	$sql = "SELECT * FROM $wpdb->posts WHERE post_status IN ('draft','publish','future')";
   $rows = $wpdb->get_results($sql);
 	foreach($rows as $row) {
-    $post_id = $row->ID;
-		$content = $row->post_content;
-    $newhash = hash("sha256",$content);
+    better_detection_do_post($row,true);
+	}
 
-		//check if has exists
-		$sql = "SELECT * FROM $hashes WHERE post_id = $post_id";
-    $rowhash = $wpdb->get_row($sql);
-		if($rowhash!==null) {
-			//check if hash has changed
-			$oldhash = $rowhash->hash_value;
-      if($oldhash!==$newhash) {
-				//save new hash value
-				$wpdb->replace($hashes,
-					array(
-						'hash_id' => $rowhash->hash_id,
-						'post_id' => $post_id,
-						'hash_value' => $newhash,
-						'hash_type' => 'sha256',
-						'hash_date' => date("Y-m-d H:i:s")
-					)
-				);
+	//update options
+	update_option('better_detect_running','N');
+	update_option('better_detect_endtime',date("Y-m-d H:i:s"));
+}
+add_action( 'better_detection_hourly', 'better_detection_do_hourly' );
 
+//process a post
+function better_detection_do_post($item,$boo) {
+	global $wpdb;
+	$hashes = $wpdb->prefix . "better_detection_hashes";
+	$errors = $wpdb->prefix . "better_detection_errors";
+
+	$post_id = $item->ID;
+	$content = $item->post_content;
+	$newhash = hash("sha256",$content);
+
+	//check if has exists
+	$sql = "SELECT * FROM $hashes WHERE post_id = $post_id";
+	$rowhash = $wpdb->get_row($sql);
+	if($rowhash!==null) {
+		//check if hash has changed
+		$oldhash = $rowhash->hash_value;
+		if($oldhash!==$newhash) {
+			//save new hash value
+			$wpdb->replace($hashes,
+				array(
+					'hash_id' => $rowhash->hash_id,
+					'post_id' => $post_id,
+					'hash_value' => $newhash,
+					'hash_type' => 'sha256',
+					'hash_date' => date("Y-m-d H:i:s")
+				)
+			);
+
+      if($boo) {
 				//save hash error
 				$wpdb->insert($errors,
 					array(
@@ -150,25 +164,38 @@ function better_detection_do_hourly() {
 				better_detect_do_notify('post',$post_id);
 			}
 		}
-		else {
-      //save new hash value
-			$wpdb->insert($hashes,
-				array(
-					'post_id' => $post_id,
-					'filename' => '',
-					'hash_value' => $newhash,
-					'hash_type' => 'sha256',
-					'hash_date' => date("Y-m-d H:i:s")
-				)
-			);
-		}
+	}
+	else {
+		//save new hash value
+		$wpdb->insert($hashes,
+			array(
+				'post_id' => $post_id,
+				'filename' => '',
+				'hash_value' => $newhash,
+				'hash_type' => 'sha256',
+				'hash_date' => date("Y-m-d H:i:s")
+			)
+		);
+	}
+}
+
+//update when posted in admin only
+function better_detection_updated_messages($messages) {
+  global $post;
+
+	//append tagline to all messages
+  $type = $post->post_type;
+  $mess = " <img src='" . WP_PLUGIN_URL . "/better-detection/icon-36x36.png' align='top' style='height:18px;margin:0 4px 0 18px;'>Protected by <strong>Better Detection</stong>";
+	for($i=1;$i<11;$i++) {
+		$messages[$type][$i] .= $mess;
 	}
 
-	//update options
-	update_option('better_detect_running','N');
-	update_option('better_detect_endtime',date("Y-m-d H:i:s"));
+  //process post
+	better_detection_do_post($post,false);
+
+  return $messages;
 }
-add_action( 'better_detection_hourly', 'better_detection_do_hourly' );
+add_filter('post_updated_messages', 'better_detection_updated_messages');
 
 function better_detect_log($message) {
   if (WP_DEBUG === true) {
