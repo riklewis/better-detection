@@ -340,7 +340,7 @@ function better_detection_admin_scripts() {
 	if($_GET["page"]==="better-detection-settings") {
 	  wp_enqueue_script('jquery-ui-core');
 	  wp_enqueue_script('jquery-ui-tabs');
-		wp_enqueue_script('better-detection-main-js', WP_PLUGIN_URL . '/better-detection/main.js',array('jquery'));
+		wp_enqueue_script('better-detection-main-js', WP_PLUGIN_URL . '/better-detection/main.js',array('jquery','jquery-ui-tabs'),false,true);
 		wp_enqueue_style('jquery-ui-tabs-min-css', WP_PLUGIN_URL . '/better-detection/jquery-ui-tabs.min.css');
 	}
 }
@@ -421,8 +421,6 @@ function better_detection_show_settings() {
 				$stat = ucwords($item->post_status);
 				$cred = date($frmt, strtotime($item->post_date));
 				$modd = date($frmt, strtotime($item->post_modified));
-				$detd = date($frmt, strtotime($row->error_date));
-				$actn = ""; //todo - add button
 			}
 			else {
 				$type = "File";
@@ -431,8 +429,6 @@ function better_detection_show_settings() {
 				$stat = ""; //todo - added/updated/deleted?
 				$cred = ""; //todo - file created date
 				$modd = ""; //todo - file modified date
-				$detd = date($frmt, strtotime($row->error_date));
-				$actn = ""; //todo - add button
 			}
 			echo '    		  <tr class="inactive">';
 			echo '            <td class="column-primary">' . $type . '</td>';
@@ -441,8 +437,11 @@ function better_detection_show_settings() {
 			echo '            <td class="column-status">' . $stat . '</td>';
 			echo '            <td class="column-datetime">' . $cred . '</td>';
 			echo '            <td class="column-datetime">' . $modd . '</td>';
-			echo '            <td class="column-datetime">' . $detd . '</td>';
-			echo '            <td class="column-actions">' . $actn. '</td>';
+			echo '            <td class="column-datetime">' . date($frmt, strtotime($row->error_date)) . '</td>';
+			echo '            <td class="column-actions">';
+			echo '              <input type="button" id="action-fix-' . $row->error_id . '" class="button button-primary action-fixed" value="Fixed">';
+			echo '              <input type="button" id="action-ign-' . $row->error_id . '" class="button button-secondary action-ignore" value="Ignore">';
+			echo '            </td>';
 			echo '          </tr>';
 		}
 		echo '        </tbody>';
@@ -476,7 +475,6 @@ function better_detection_show_settings() {
 	echo '    </div>';
 	echo '  </div>';
   echo '</div>';
-  echo '<script>jQuery(function(){jQuery("#better-detection-tabs").tabs();});</script>';
 }
 
 function better_detection_badge_php() {
