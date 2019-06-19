@@ -18,9 +18,9 @@ defined('ABSPATH') or die('Forbidden');
 --------------------------- Installation ---------------------------
 */
 
-define('BETTER_DETECT_VERSION','0.5');
+define('better_detection_VERSION','0.5');
 
-function better_detect_activation() {
+function better_detection_activation() {
 	global $wpdb;
 
 	//create table to store post/page hashes
@@ -34,7 +34,7 @@ function better_detect_activation() {
 		hash_date datetime NOT NULL,
 	  PRIMARY KEY  (hash_id)
 	)";
-	better_detect_database($table, $sql);
+	better_detection_database($table, $sql);
 
 	//create table to store errors
 	$table = $wpdb->prefix . "better_detection_errors";
@@ -48,19 +48,19 @@ function better_detect_activation() {
 		fixed_date datetime,
 	  PRIMARY KEY  (error_id)
 	)";
-	better_detect_database($table, $sql);
+	better_detection_database($table, $sql);
 
 	//store latest version number
-	update_option('better_detect_version',BETTER_DETECT_VERSION);
+	update_option('better_detection_version',better_detection_VERSION);
 
 	//create scheduled task
 	if(!wp_next_scheduled('better_detection_hourly')) {
 	  wp_schedule_event(time(), 'hourly', 'better_detection_hourly');
 	}
 }
-register_activation_hook(__FILE__, 'better_detect_activation');
+register_activation_hook(__FILE__, 'better_detection_activation');
 
-function better_detect_database($table, $sql) {
+function better_detection_database($table, $sql) {
 	global $wpdb;
 
   //check if table needs creating/updating
@@ -69,8 +69,8 @@ function better_detect_database($table, $sql) {
 		$update = false;
 	}
 	else {
-		$dat_ver = get_option('better_detect_version') * 1;
-		$cur_ver = BETTER_DETECT_VERSION * 1;
+		$dat_ver = get_option('better_detection_version') * 1;
+		$cur_ver = better_detection_VERSION * 1;
 		$create = false;
 		$update = ($cur_ver > $dat_ver);
 	}
@@ -89,12 +89,12 @@ function better_detect_database($table, $sql) {
 -------------------------- Uninstallation ---------------------------
 */
 
-function better_detect_deactivation() {
+function better_detection_deactivation() {
    //cancel scheduled tasks
 	 $timestamp = wp_next_scheduled('better_detection_hourly');
    wp_unschedule_event($timestamp, 'better_detection_hourly');
 }
-register_deactivation_hook(__FILE__, 'better_detect_deactivation');
+register_deactivation_hook(__FILE__, 'better_detection_deactivation');
 
 /*
 ---------------------------- Detection -----------------------------
@@ -105,8 +105,8 @@ function better_detection_do_hourly() {
 	global $wpdb;
 
 	//update options
-	update_option('better_detect_running','Y');
-	update_option('better_detect_runtime',date("Y-m-d H:i:s"));
+	update_option('better_detection_running','Y');
+	update_option('better_detection_runtime',date("Y-m-d H:i:s"));
 
 	//get posts to check
 	$sql = "SELECT * FROM $wpdb->posts WHERE post_status IN ('draft','publish','future')";
@@ -116,8 +116,8 @@ function better_detection_do_hourly() {
 	}
 
 	//update options
-	update_option('better_detect_running','N');
-	update_option('better_detect_endtime',date("Y-m-d H:i:s"));
+	update_option('better_detection_running','N');
+	update_option('better_detection_endtime',date("Y-m-d H:i:s"));
 }
 add_action( 'better_detection_hourly', 'better_detection_do_hourly' );
 
@@ -162,7 +162,7 @@ function better_detection_do_post($item,$boo) {
 				);
 
 				//send notifications
-				better_detect_do_notify('post',$post_id);
+				better_detection_do_notify('post',$post_id);
 			}
 		}
 	}
@@ -180,7 +180,7 @@ function better_detection_do_post($item,$boo) {
 	}
 }
 
-function better_detect_do_notify($type,$item_id) {
+function better_detection_do_notify($type,$item_id) {
 	$settings = get_option('better-detection-settings');
 	$value = "";
 
@@ -230,9 +230,9 @@ function better_detect_do_notify($type,$item_id) {
 			$body .= '  <p>All the best, the <strong>Better Security</strong> team</p>';
 
       //send HTML email
-			add_filter('wp_mail_content_type','better_detect_set_html_mail_content_type');
+			add_filter('wp_mail_content_type','better_detection_set_html_mail_content_type');
 			wp_mail($value,"ALERT from Better Detection - $link",$body);
-			remove_filter('wp_mail_content_type','better_detect_set_html_mail_content_type');
+			remove_filter('wp_mail_content_type','better_detection_set_html_mail_content_type');
 		}
 	}
 
@@ -297,7 +297,7 @@ function better_detect_do_notify($type,$item_id) {
 }
 
 //set email as HTML
-function better_detect_set_html_mail_content_type() {
+function better_detection_set_html_mail_content_type() {
 	return 'text/html';
 }
 
@@ -321,7 +321,7 @@ add_filter('post_updated_messages', 'better_detection_updated_messages');
 
 
 //debug logging if required
-function better_detect_log($message) {
+function better_detection_log($message) {
   if (WP_DEBUG === true) {
     if (is_array($message) || is_object($message)) {
       error_log(print_r($message, true));
@@ -337,25 +337,27 @@ function better_detect_log($message) {
 */
 
 function better_detection_admin_scripts() {
-  wp_enqueue_script('jquery-ui-core');
-  wp_enqueue_script('jquery-ui-tabs');
-	wp_enqueue_style('jquery-ui-tabs-min-css', WP_PLUGIN_URL . '/better-detection/jquery-ui-tabs.min.css');
+	if($_GET["page"]==="better-detection-settings") {
+	  wp_enqueue_script('jquery-ui-core');
+	  wp_enqueue_script('jquery-ui-tabs');
+		wp_enqueue_script('better-detection-main-js', WP_PLUGIN_URL . '/better-detection/main.js',array('jquery'));
+		wp_enqueue_style('jquery-ui-tabs-min-css', WP_PLUGIN_URL . '/better-detection/jquery-ui-tabs.min.css');
+	}
 }
-
 add_action('admin_enqueue_scripts', 'better_detection_admin_scripts');
 
 //add settings page
-function better_detect_menus() {
-	add_options_page(__('Better Detection','better-detect-text'), __('Better Detection','better-detect-text'), 'manage_options', 'better-detection-settings', 'better_detect_show_settings');
+function better_detection_menus() {
+	add_options_page(__('Better Detection','better-detect-text'), __('Better Detection','better-detect-text'), 'manage_options', 'better-detection-settings', 'better_detection_show_settings');
 }
 
 //add the settings
-function better_detect_settings() {
+function better_detection_settings() {
 	register_setting('better-detection','better-detection-settings');
 
-  add_settings_section('better-detection-section-notify', __('Notifications', 'better-detect-text'), 'better_detect_section_notify', 'better-detection');
-  add_settings_field('better-detection-notify-email', __('Email Address', 'better-detect-text'), 'better_detect_notify_email', 'better-detection', 'better-detection-section-notify');
-  add_settings_field('better-detection-notify-slack', __('Slack WebHook URL', 'better-detect-text'), 'better_detect_notify_slack', 'better-detection', 'better-detection-section-notify');
+  add_settings_section('better-detection-section-notify', __('Notifications', 'better-detect-text'), 'better_detection_section_notify', 'better-detection');
+  add_settings_field('better-detection-notify-email', __('Email Address', 'better-detect-text'), 'better_detection_notify_email', 'better-detection', 'better-detection-section-notify');
+  add_settings_field('better-detection-notify-slack', __('Slack WebHook URL', 'better-detect-text'), 'better_detection_notify_slack', 'better-detection', 'better-detection-section-notify');
 }
 
 //allow the settings to be stored
@@ -367,7 +369,7 @@ add_filter('whitelist_options', function($whitelist_options) {
 });
 
 //define output for settings page
-function better_detect_show_settings() {
+function better_detection_show_settings() {
 	global $wpdb;
 	$errors = $wpdb->prefix . "better_detection_errors";
 	$frmt = get_option('time_format') . ', ' . get_option('date_format');
@@ -379,7 +381,7 @@ function better_detect_show_settings() {
   echo '    </a>';
   echo '  </div>';
 	echo '  <div style="margin:0 0 24px 0;">';
-  echo '    <a href="https://www.php.net/supported-versions.php" target="_blank"><img src="' . better_detect_badge_php() . '"></a>';
+  echo '    <a href="https://www.php.net/supported-versions.php" target="_blank"><img src="' . better_detection_badge_php() . '"></a>';
   echo '  </div>';
   echo '  <h1>' . __('Better Detection', 'better-detect-text') . '</h1>';
 	echo '  <p>This plugin will create and store hashes of content (eg. posts, pages, etc.) and monitor these moving forwards in order to detect when changes occur.  When changes are made outside of the normal working process, such as a direct database update, this will then be detected as the hash will get out of sync with the content.';
@@ -477,7 +479,7 @@ function better_detect_show_settings() {
   echo '<script>jQuery(function(){jQuery("#better-detection-tabs").tabs();});</script>';
 }
 
-function better_detect_badge_php() {
+function better_detection_badge_php() {
   $ver = phpversion();
   $col = "critical";
   if(version_compare($ver,'7.1','>=')) {
@@ -490,12 +492,12 @@ function better_detect_badge_php() {
 }
 
 //define output for settings section
-function better_detect_section_notify() {
+function better_detection_section_notify() {
   echo '<hr>';
 }
 
 //defined output for settings
-function better_detect_notify_email() {
+function better_detection_notify_email() {
 	$settings = get_option('better-detection-settings');
 	$value = "";
 	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
@@ -504,7 +506,7 @@ function better_detect_notify_email() {
   echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-email]" type="email" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
 }
 
-function better_detect_notify_slack() {
+function better_detection_notify_slack() {
 	$settings = get_option('better-detection-settings');
 	$value = "";
 	if(isset($settings['better-detection-notify-slack']) && $settings['better-detection-notify-slack']!=="") {
@@ -516,8 +518,8 @@ function better_detect_notify_slack() {
 
 //add actions
 if(is_admin()) {
-  add_action('admin_menu','better_detect_menus');
-  add_action('admin_init','better_detect_settings');
+  add_action('admin_menu','better_detection_menus');
+  add_action('admin_init','better_detection_settings');
 }
 
 /*
@@ -549,14 +551,14 @@ add_action('wp_before_admin_bar_render', 'better_detection_admin_bar_render');
 */
 
 //show settings link
-function better_detect_links($links) {
+function better_detection_links($links) {
 	$links[] = sprintf('<a href="%s">%s</a>',admin_url('options-general.php?page=better-detection-settings'),'Settings');
 	return $links;
 }
 
 //add actions
 if(is_admin()) {
-  add_filter('plugin_action_links_'.plugin_basename(__FILE__),'better_detect_links');
+  add_filter('plugin_action_links_'.plugin_basename(__FILE__),'better_detection_links');
 }
 
 /*
