@@ -382,7 +382,7 @@ function better_detect_show_settings() {
   echo '    <a href="https://www.php.net/supported-versions.php" target="_blank"><img src="' . better_detect_badge_php() . '"></a>';
   echo '  </div>';
   echo '  <h1>' . __('Better Detection', 'better-detect-text') . '</h1>';
-	echo '  <p>This plugin will create and store hashes of content and critical files, and monitor these moving forwards in order to detect when changes occur.  When changes are made outside of the normal working process, such as a direct database update, this will then be detected as the hash will get out of sync with the content.';
+	echo '  <p>This plugin will create and store hashes of content (eg. posts, pages, etc.) and monitor these moving forwards in order to detect when changes occur.  When changes are made outside of the normal working process, such as a direct database update, this will then be detected as the hash will get out of sync with the content.';
   echo '  <div id="better-detection-tabs">';
   echo '    <ul>';
   echo '      <li><a href="#better-detection-tabs-errors">Errors<span id="better-detection-error-count"></span></a></li>';
