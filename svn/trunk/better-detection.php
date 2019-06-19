@@ -368,6 +368,10 @@ add_filter('whitelist_options', function($whitelist_options) {
 
 //define output for settings page
 function better_detect_show_settings() {
+	global $wpdb;
+	$errors = $wpdb->prefix . "better_detection_errors";
+	$frmt = get_option('time_format') . ', ' . get_option('date_format');
+
   echo '<div class="wrap">';
   echo '  <div style="padding:12px;background-color:white;margin:24px 0;">';
   echo '    <a href="https://bettersecurity.co" target="_blank" style="display:inline-block;width:100%;">';
@@ -386,7 +390,77 @@ function better_detect_show_settings() {
   echo '      <li><a href="#better-detection-tabs-extras">Extras</a></li>';
   echo '    </ul>';
   echo '    <div id="better-detection-tabs-errors">';
-	//todo
+
+	//check if unfixed errors
+	$count = $wpdb->get_var("SELECT COUNT(*) FROM $errors WHERE fixed_date IS NULL");
+	if($count>0) {
+		echo '    	<table class="wp-list-table widefat striped">';
+		echo '      	<thead>';
+		echo '        	<tr>';
+		echo '    		    <th scope="col" id="better-detection-type" class="manage-column column-name column-primary">Type</th>';
+		echo '            <th scope="col" id="better-detection-desc" class="manage-column column-description">Title</th>';
+		echo '    		    <th scope="col" id="better-detection-indx" class="manage-column column-index">ID</th>';
+		echo '    		    <th scope="col" id="better-detection-stat" class="manage-column column-status">Status</th>';
+		echo '    		    <th scope="col" id="better-detection-cred" class="manage-column column-datetime">Created</th>';
+		echo '    		    <th scope="col" id="better-detection-modd" class="manage-column column-datetime">Modified</th>';
+		echo '    		    <th scope="col" id="better-detection-detd" class="manage-column column-datetime">Change Detected</th>';
+		echo '    		    <th scope="col" id="better-detection-actn" class="manage-column column-actions">Action</th>';
+		echo '         </tr>';
+		echo '      	</thead>';
+	  echo '        <tbody id="better-detection-list">';
+		$sql = "SELECT * FROM $errors WHERE fixed_date IS NULL ORDER BY error_date ASC";
+		$rows = $wpdb->get_results($sql);
+		foreach($rows as $row) {
+			if($row->post_id) {
+				$item = get_post($row->post_id);
+				$type = ucwords($item->post_type);
+				$desc = '<a href="' . get_permalink($item->ID) . '" target="blank">' . $item->post_title . ' <span class="dashicons dashicons-external"></span></a>';
+				$indx = $item->ID;
+				$stat = ucwords($item->post_status);
+				$cred = date($frmt, strtotime($item->post_date));
+				$modd = date($frmt, strtotime($item->post_modified));
+				$detd = date($frmt, strtotime($row->error_date));
+				$actn = ""; //todo - add button
+			}
+			else {
+				$type = "File";
+				$desc = $row->filename;
+				$indx = "";
+				$stat = ""; //todo - added/updated/deleted?
+				$cred = ""; //todo - file created date
+				$modd = ""; //todo - file modified date
+				$detd = date($frmt, strtotime($row->error_date));
+				$actn = ""; //todo - add button
+			}
+			echo '    		  <tr class="inactive">';
+			echo '            <td class="column-primary">' . $type . '</td>';
+			echo '            <td class="column-description desc">' . $desc . '</td>';
+			echo '            <td class="column-index">' . $indx . '</td>';
+			echo '            <td class="column-status">' . $stat . '</td>';
+			echo '            <td class="column-datetime">' . $cred . '</td>';
+			echo '            <td class="column-datetime">' . $modd . '</td>';
+			echo '            <td class="column-datetime">' . $detd . '</td>';
+			echo '            <td class="column-actions">' . $actn. '</td>';
+			echo '          </tr>';
+		}
+		echo '        </tbody>';
+		echo '      	<tfoot>';
+		echo '        	<tr>';
+		echo '    		    <th scope="col" class="manage-column column-name column-primary">Type</th>';
+		echo '            <th scope="col" class="manage-column column-description">Title</th>';
+		echo '    		    <th scope="col" class="manage-column column-index">ID</th>';
+		echo '    		    <th scope="col" class="manage-column column-status">Status</th>';
+		echo '    		    <th scope="col" class="manage-column column-datetime">Created</th>';
+		echo '    		    <th scope="col" class="manage-column column-datetime">Modified</th>';
+		echo '    		    <th scope="col" class="manage-column column-datetime">Change Detected</th>';
+		echo '    		    <th scope="col" class="manage-column column-actions">Action</th>';
+		echo '         </tr>';
+		echo '        </tfoot>';
+		echo '      </table>';
+	}
+	else {
+		echo '      <p>No new errors have been detected - yay!</p>';
+	}
 	echo '    </div>';
 	echo '    <div id="better-detection-tabs-settings">';
 	echo '      <form action="options.php" method="post">';
