@@ -333,6 +333,37 @@ function better_detection_log($message) {
 }
 
 /*
+-------------------------- AJAX Functions ---------------------------
+*/
+
+function better_detection_do_ajax() {
+	global $wpdb;
+
+  //check security key
+	if(check_ajax_referer('better-detection-nonce', 'key', false)) {
+    //check mode
+		$mode = sanitize_text_field($_POST['mode'] );
+    switch($mode) {
+      case "fixed":
+			  //// TODO:
+				break;
+			case "ignore":
+			  //// TODO:
+				break;
+			default:
+			  echo "Error: Invalid mode";
+		}
+  }
+	else {
+		echo "Error: Key mismatch";
+	}
+
+  //return out
+	wp_die();
+}
+add_action('wp_ajax_better_detection', 'better_detection_do_ajax');
+
+/*
 ----------------------------- Settings ------------------------------
 */
 
@@ -340,7 +371,13 @@ function better_detection_admin_scripts() {
 	if($_GET["page"]==="better-detection-settings") {
 	  wp_enqueue_script('jquery-ui-core');
 	  wp_enqueue_script('jquery-ui-tabs');
+
 		wp_enqueue_script('better-detection-main-js', WP_PLUGIN_URL . '/better-detection/main.js',array('jquery','jquery-ui-tabs'),false,true);
+		wp_localize_script('better-detection-main-js', 'ajax_object', array(
+			'url' => admin_url('admin-ajax.php'),
+			'key' => wp_create_nonce('better-detection-nonce')
+		));
+
 		wp_enqueue_style('jquery-ui-tabs-min-css', WP_PLUGIN_URL . '/better-detection/jquery-ui-tabs.min.css');
 	}
 }
