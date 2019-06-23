@@ -206,7 +206,7 @@ function better_detection_do_notify($type,$item_id) {
       //create email body
 			$body  = '  <div style="background-color:white;margin:24px 0;">';
 			$body .= '    <a href="https://bettersecurity.co" target="_blank" style="display:inline-block;width:100%;">';
-			$body .= '      <img src="' . WP_PLUGIN_URL . '/better-detection/header.png" style="height:64px;">';
+			$body .= '      <img src="' . plugins_url('header.png', __FILE__) . '" style="height:64px;">';
 			$body .= '    </a>';
 			$body .= '  </div>';
 			$body .= '  <p>You have the <strong>Better Detection</strong> plugin installed on your Wordpress site and it has detected that a change was made outside of the normal working process, such as a direct database update.  The details of the change are below:</p>';
@@ -304,16 +304,31 @@ function better_detection_set_html_mail_content_type() {
 //update when posted in admin only
 function better_detection_updated_messages($messages) {
   global $post;
+  global $wpdb;
+	$errors = $wpdb->prefix . "better_detection_errors";
 
 	//append tagline to all messages
   $type = $post->post_type;
-  $mess = " <img src='" . WP_PLUGIN_URL . "/better-detection/icon-36x36.png' align='top' style='height:18px;margin:0 4px 0 18px;'>Protected by <strong>Better Detection</stong>";
+  $mess = " <img src='" . plugins_url('icon-36x36.png', __FILE__) . "' align='top' style='height:18px;margin:0 4px 0 18px;'>Protected by <strong>Better Detection</stong>";
 	for($i=1;$i<11;$i++) {
 		$messages[$type][$i] .= $mess;
 	}
 
+/* // TODO: Firing when post is shown as well as updated - fix with transient?
+
   //process post
 	better_detection_do_post($post,false);
+
+	//assume errors have been fixed
+	$wpdb->update($errors,
+		array(
+			'fixed_date' => date("Y-m-d H:i:s")
+		),
+		array(
+			'post_id' => $post->ID,
+			'fixed_date' => null
+		)
+	); */
 
   return $messages;
 }
@@ -395,14 +410,14 @@ function better_detection_admin_scripts() {
 	  wp_enqueue_script('jquery-ui-core');
 	  wp_enqueue_script('jquery-ui-tabs');
 
-		wp_enqueue_script('better-detection-main-js', WP_PLUGIN_URL . '/better-detection/main.js',array('jquery','jquery-ui-tabs'),false,true);
+		wp_enqueue_script('better-detection-main-js', plugins_url('main.js', __FILE__),array('jquery','jquery-ui-tabs'),false,true);
 		wp_localize_script('better-detection-main-js', 'ajax_object', array(
 			'url' => admin_url('admin-ajax.php'),
 			'key' => wp_create_nonce('better-detection-nonce'),
 			'gif' => plugins_url('working.gif', __FILE__)
 		));
 
-		wp_enqueue_style('jquery-ui-tabs-min-css', WP_PLUGIN_URL . '/better-detection/jquery-ui-tabs.min.css');
+		wp_enqueue_style('jquery-ui-tabs-min-css', plugins_url('jquery-ui-tabs.min.css', __FILE__));
 	}
 }
 add_action('admin_enqueue_scripts', 'better_detection_admin_scripts');
@@ -437,7 +452,7 @@ function better_detection_show_settings() {
   echo '<div class="wrap">';
   echo '  <div style="padding:12px;background-color:white;margin:24px 0;">';
   echo '    <a href="https://bettersecurity.co" target="_blank" style="display:inline-block;width:100%;">';
-  echo '      <img src="' . WP_PLUGIN_URL . '/better-detection/header.png" style="height:64px;">';
+  echo '      <img src="' . plugins_url('header.png', __FILE__) . '" style="height:64px;">';
   echo '    </a>';
   echo '  </div>';
 	echo '  <div style="margin:0 0 24px 0;">';
@@ -595,7 +610,7 @@ function better_detection_admin_bar_render() {
 		$wp_admin_bar->add_menu(array(
 			'parent' => false,
 			'id' => 'better-detection',
-			'title' => "<img src='" . WP_PLUGIN_URL . "/better-detection/icon-white-36x36.png' align='top' style='height:18px;margin:0 4px 0 0;position:relative;top:6px;'>Better Detection ($count)",
+			'title' => "<img src='" . plugins_url('icon-white-36x36.png', __FILE__) . "' align='top' style='height:18px;margin:0 4px 0 0;position:relative;top:6px;'>Better Detection ($count)",
 			'href' => admin_url('options-general.php') . '?page=better-detection-settings',
 			'meta' => false
 		));
