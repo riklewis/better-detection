@@ -2,7 +2,7 @@
 /*
 Plugin Name:  Better Detection
 Description:  Improve the security of your website by detecting unexpected changes to both content and files
-Version:      0.5
+Version:      1.0
 Author:       Better Security
 Author URI:   https://bettersecurity.co
 License:      GPL3
@@ -18,7 +18,7 @@ defined('ABSPATH') or die('Forbidden');
 --------------------------- Installation ---------------------------
 */
 
-define('better_detection_VERSION','0.5');
+define('better_detection_VERSION','1.0');
 
 function better_detection_activation() {
 	global $wpdb;
