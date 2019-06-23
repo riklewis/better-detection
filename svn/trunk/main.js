@@ -11,18 +11,31 @@ jQuery(function() {
 
   //handle button clicks
   jQuery("#better-detection-tabs-errors").on("click","input",function(e) {
-    var inp = jQuery(this);
     var data = {'action':'better_detection','mode':'unknown','key':ajax_object.key};
+    var inp = jQuery(this);
     if(inp.hasClass("action-fixed")) {
       data.mode = "fixed";
+      data.id = inp.attr("id").replace("action-fix-","");
     }
     if(inp.hasClass("action-ignore")) {
       data.mode = "ignore";
+      data.id = inp.attr("id").replace("action-ign-","");
     }
-    jQuery.post(ajax_object.url, data, function(response) {
-			alert('Got this from the server: ' + response);
-      //// TODO: Remove row if successful
-      better_detection_error_count();
-		});
+    if(data.mode!=="unknown" && !isNaN(data.id)) {
+      inp.after("<img src='"+ajax_object.gif+"' style='height:24px'>").hide().siblings("input").hide();
+      jQuery.post(ajax_object.url, data, function(response) {
+  			console.log(response);
+        if(response==="Success") {
+          inp.closest("tr").fadeOut("slow",function() { //remove row
+            jQuery(this).remove();
+            better_detection_error_count();
+          });
+        }
+        else {
+          inp.siblings("img").remove(); //remove working image
+          inp.siblings("input").addBack().show(); //restore buttons
+        }
+  		});
+    }
   });
 });

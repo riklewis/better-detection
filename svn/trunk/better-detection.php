@@ -338,17 +338,40 @@ function better_detection_log($message) {
 
 function better_detection_do_ajax() {
 	global $wpdb;
+	$errors = $wpdb->prefix . "better_detection_errors";
 
   //check security key
 	if(check_ajax_referer('better-detection-nonce', 'key', false)) {
     //check mode
-		$mode = sanitize_text_field($_POST['mode'] );
+		$mode = sanitize_text_field($_POST['mode']);
     switch($mode) {
       case "fixed":
-			  //// TODO:
+				$res = $wpdb->replace($errors,
+					array(
+						'error_id' => sanitize_text_field($_POST['id']),
+						'fixed_date' => date("Y-m-d H:i:s")
+					)
+				);
+				if($res===false) {
+					echo "Error: Update failed";
+				}
+				else {
+					echo "Success";
+				}
 				break;
 			case "ignore":
-			  //// TODO:
+				$res = $wpdb->replace($errors,
+					array(
+						'error_id' => sanitize_text_field($_POST['id']),
+						'fixed_date' => date("Y-m-d H:i:s")
+					)
+				);
+				if($res===false) {
+					echo "Error: Update failed";
+				}
+				else {
+					echo "Success";
+				}
 				break;
 			default:
 			  echo "Error: Invalid mode";
@@ -375,7 +398,8 @@ function better_detection_admin_scripts() {
 		wp_enqueue_script('better-detection-main-js', WP_PLUGIN_URL . '/better-detection/main.js',array('jquery','jquery-ui-tabs'),false,true);
 		wp_localize_script('better-detection-main-js', 'ajax_object', array(
 			'url' => admin_url('admin-ajax.php'),
-			'key' => wp_create_nonce('better-detection-nonce')
+			'key' => wp_create_nonce('better-detection-nonce'),
+			'gif' => plugins_url('working.gif', __FILE__)
 		));
 
 		wp_enqueue_style('jquery-ui-tabs-min-css', WP_PLUGIN_URL . '/better-detection/jquery-ui-tabs.min.css');
@@ -401,7 +425,6 @@ function better_detection_settings() {
 add_filter('whitelist_options', function($whitelist_options) {
   $whitelist_options['better-detection'][] = 'better-detection-notify-email';
   $whitelist_options['better-detection'][] = 'better-detection-notify-slack';
-  //todo
   return $whitelist_options;
 });
 
@@ -426,7 +449,7 @@ function better_detection_show_settings() {
   echo '    <ul>';
   echo '      <li><a href="#better-detection-tabs-errors">Errors<span id="better-detection-error-count"></span></a></li>';
   echo '      <li><a href="#better-detection-tabs-settings">Options</a></li>';
-  echo '      <li><a href="#better-detection-tabs-extras">Extras</a></li>';
+  //echo '      <li><a href="#better-detection-tabs-extras">Extras</a></li>';
   echo '    </ul>';
   echo '    <div id="better-detection-tabs-errors">';
 
@@ -463,9 +486,9 @@ function better_detection_show_settings() {
 				$type = "File";
 				$desc = $row->filename;
 				$indx = "";
-				$stat = ""; //todo - added/updated/deleted?
-				$cred = ""; //todo - file created date
-				$modd = ""; //todo - file modified date
+				$stat = ""; //added/updated/deleted?
+				$cred = ""; //file created date
+				$modd = ""; //file modified date
 			}
 			echo '    		  <tr class="inactive">';
 			echo '            <td class="column-primary">' . $type . '</td>';
@@ -507,9 +530,8 @@ function better_detection_show_settings() {
 	submit_button();
   echo '      </form>';
 	echo '    </div>';
-	echo '    <div id="better-detection-tabs-extras">';
-	//todo
-	echo '    </div>';
+	//echo '    <div id="better-detection-tabs-extras">';
+	//echo '    </div>';
 	echo '  </div>';
   echo '</div>';
 }
