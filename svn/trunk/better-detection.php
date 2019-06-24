@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name:  Better Detection
-Description:  Improve the security of your website by detecting unexpected changes to both content and files
-Version:      1.0
+Description:  Improve the security of your website by detecting unexpected changes to both content
+Version:      1.1
 Author:       Better Security
 Author URI:   https://bettersecurity.co
 License:      GPL3
@@ -18,7 +18,7 @@ defined('ABSPATH') or die('Forbidden');
 --------------------------- Installation ---------------------------
 */
 
-define('better_detection_VERSION','1.0');
+define('BETTER_DETECTION_VERSION','1.1');
 
 function better_detection_activation() {
 	global $wpdb;
@@ -46,12 +46,13 @@ function better_detection_activation() {
 		new_hash varchar(255) NOT NULL,
 		error_date datetime NOT NULL,
 		fixed_date datetime,
+		fixed_mode varchar(10)
 	  PRIMARY KEY  (error_id)
 	)";
 	better_detection_database($table, $sql);
 
 	//store latest version number
-	update_option('better_detection_version',better_detection_VERSION);
+	update_option('better_detection_version',BETTER_DETECTION_VERSION);
 
 	//create scheduled task
 	if(!wp_next_scheduled('better_detection_hourly')) {
@@ -70,7 +71,7 @@ function better_detection_database($table, $sql) {
 	}
 	else {
 		$dat_ver = get_option('better_detection_version') * 1;
-		$cur_ver = better_detection_VERSION * 1;
+		$cur_ver = BETTER_DETECTION_VERSION * 1;
 		$create = false;
 		$update = ($cur_ver > $dat_ver);
 	}
@@ -329,7 +330,8 @@ function better_detection_updated_messages($messages) {
 		//assume errors have been fixed
 		$wpdb->update($errors,
 			array(
-				'fixed_date' => date("Y-m-d H:i:s")
+				'fixed_date' => date("Y-m-d H:i:s"),
+				'fixed_mode' => 'saved'
 			),
 			array(
 				'post_id' => $post->ID,
@@ -373,7 +375,8 @@ function better_detection_do_ajax() {
 				$res = $wpdb->replace($errors,
 					array(
 						'error_id' => sanitize_text_field($_POST['id']),
-						'fixed_date' => date("Y-m-d H:i:s")
+						'fixed_date' => date("Y-m-d H:i:s"),
+						'fixed_mode' => 'fixed'
 					)
 				);
 				if($res===false) {
@@ -387,7 +390,8 @@ function better_detection_do_ajax() {
 				$res = $wpdb->replace($errors,
 					array(
 						'error_id' => sanitize_text_field($_POST['id']),
-						'fixed_date' => date("Y-m-d H:i:s")
+						'fixed_date' => date("Y-m-d H:i:s"),
+						'fixed_mode' => 'ignore'
 					)
 				);
 				if($res===false) {
