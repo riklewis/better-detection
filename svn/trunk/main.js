@@ -4,7 +4,7 @@ jQuery(function() {
 
   //update error count
   function better_detection_error_count() {
-    var trs = jQuery("#better-detection-tabs-errors").find("tr").length-2;
+    var trs = Math.max(0,jQuery("#better-detection-tabs-errors").find("tr").length-2);
     jQuery("#better-detection-error-count").html(" ("+trs+")");
   }
   better_detection_error_count();

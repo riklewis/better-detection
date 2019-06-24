@@ -119,7 +119,7 @@ function better_detection_do_hourly() {
 	update_option('better_detection_running','N');
 	update_option('better_detection_endtime',date("Y-m-d H:i:s"));
 }
-add_action( 'better_detection_hourly', 'better_detection_do_hourly' );
+add_action('better_detection_hourly', 'better_detection_do_hourly');
 
 //process a post
 function better_detection_do_post($item,$boo) {
@@ -301,6 +301,12 @@ function better_detection_set_html_mail_content_type() {
 	return 'text/html';
 }
 
+//store when post is updated/created
+function better_detection_save_post($post_id, $post, $update) {
+  set_transient("better_detection_save_post_" . $post_id, ($update ? "UPDATED" : "CREATED"), 30);
+}
+add_action('save_post', 'better_detection_save_post', 10, 3);
+
 //update when posted in admin only
 function better_detection_updated_messages($messages) {
   global $post;
@@ -314,21 +320,24 @@ function better_detection_updated_messages($messages) {
 		$messages[$type][$i] .= $mess;
 	}
 
-/* // TODO: Firing when post is shown as well as updated - fix with transient?
+	//check if post has been saved
+	$boo = get_transient("better_detection_save_post_" . $post->ID);
+  if($boo!==false) {
+	  //process post
+		better_detection_do_post($post,false);
 
-  //process post
-	better_detection_do_post($post,false);
-
-	//assume errors have been fixed
-	$wpdb->update($errors,
-		array(
-			'fixed_date' => date("Y-m-d H:i:s")
-		),
-		array(
-			'post_id' => $post->ID,
-			'fixed_date' => null
-		)
-	); */
+		//assume errors have been fixed
+		$wpdb->update($errors,
+			array(
+				'fixed_date' => date("Y-m-d H:i:s")
+			),
+			array(
+				'post_id' => $post->ID,
+				'fixed_date' => null
+			)
+		);
+	}
+	delete_transient("better_detection_save_post_" . $post->ID);
 
   return $messages;
 }
