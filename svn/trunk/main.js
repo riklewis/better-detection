@@ -28,6 +28,10 @@ jQuery(function() {
         if(response==="Success") {
           inp.closest("tr").fadeOut("slow",function() { //remove row
             jQuery(this).remove();
+            var trs = jQuery("#better-detection-tabs-errors").find("tr");
+            if(trs.length===2) {
+              jQuery("#better-detection-tabs-errors").html("<p>No new errors have been detected - yay!</p>"); //if only header/footer left then show message
+            }
             better_detection_error_count();
           });
         }
