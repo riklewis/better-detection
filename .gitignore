@@ -26,6 +26,7 @@ node_modules
 
 # Backups
 *.bak
+SQL.txt
 
 # Logs
 *.log
