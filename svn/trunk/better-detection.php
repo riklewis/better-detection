@@ -304,7 +304,14 @@ function better_detection_set_html_mail_content_type() {
 
 //store when post is updated/created
 function better_detection_save_post($post_id, $post, $update) {
-  set_transient("better_detection_save_post_" . $post_id, ($update ? "UPDATED" : "CREATED"), 30);
+	if(defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+		//process post on auto-save
+		better_detection_do_post($post,false);
+	}
+  else {
+		//flag post to be processed later
+    set_transient("better_detection_save_post_" . $post_id, ($update ? "UPDATED" : "CREATED"), 30);
+	}
 }
 add_action('save_post', 'better_detection_save_post', 10, 3);
 
