@@ -2,7 +2,7 @@
 /*
 Plugin Name:  Better Detection
 Description:  Improve the security of your website by detecting unexpected changes to both content
-Version:      1.1
+Version:      1.2
 Author:       Better Security
 Author URI:   https://bettersecurity.co
 License:      GPL3
@@ -210,29 +210,29 @@ function better_detection_do_notify($type,$item_id) {
 			$body .= '      <img src="' . plugins_url('header.png', __FILE__) . '" style="height:64px;">';
 			$body .= '    </a>';
 			$body .= '  </div>';
-			$body .= '  <p>You have the <strong>Better Detection</strong> plugin installed on your Wordpress site and it has detected that a change was made outside of the normal working process, such as a direct database update.  The details of the change are below:</p>';
+			$body .= '  <p>' . __('You have the <strong>Better Detection</strong> plugin installed on your Wordpress site and it has detected that a change was made outside of the normal working process, such as a direct database update.  The details of the change are below:', 'better-detect-text') . '</p>';
 			$body .= '  <p><ul>';
 			switch($type) {
 				case "post":
 					$item = get_post($item_id);
-					$body .= '  <li>Type: <strong>' . ucwords($item->post_type) . '</strong></li>';
-					$body .= '  <li>Title: <strong><a href="' . get_permalink($item_id) . '">' . $item->post_title . '</a></strong></li>';
-					$body .= '  <li>ID: <strong>' . $item->ID . '</strong></li>';
-					$body .= '  <li>Status: <strong>' . ucwords($item->post_status) . '</strong></li>';
-					$body .= '  <li>Post Date: <strong>' . date($frmt, strtotime($item->post_date)) . '</strong></li>';
-					$body .= '  <li>Last Modified: <strong>' . date($frmt, strtotime($item->post_modified)) . '</strong></li>';
+					$body .= '  <li>' . __('Type', 'better-detect-text') . ': <strong>' . ucwords($item->post_type) . '</strong></li>';
+					$body .= '  <li>' . __('Title', 'better-detect-text') . ': <strong><a href="' . get_permalink($item_id) . '">' . $item->post_title . '</a></strong></li>';
+					$body .= '  <li>' . __('ID', 'better-detect-text') . ': <strong>' . $item->ID . '</strong></li>';
+					$body .= '  <li>' . __('Status', 'better-detect-text') . ': <strong>' . ucwords($item->post_status) . '</strong></li>';
+					$body .= '  <li>' . __('Post Date', 'better-detect-text') . ': <strong>' . date($frmt, strtotime($item->post_date)) . '</strong></li>';
+					$body .= '  <li>' . __('Last Modified', 'better-detect-text') . ': <strong>' . date($frmt, strtotime($item->post_modified)) . '</strong></li>';
 					break;
 				default:
-					$body .= '  <li>Unknown type: <strong>' . $type . '</strong> (ID: ' . $item_id . ')</li>';
+					$body .= '  <li>' . __('Unknown type', 'better-detect-text') . ': <strong>' . $type . '</strong> (' . __('ID', 'better-detect-text') . ': ' . $item_id . ')</li>';
 			}
 			$body .= '  </ul></p>';
-			$body .= '  <p>If you recognise this change as one that you made then please ignore this email.  However, you may want to investigate to be sure that you are happy with the change that has been made.</p>';
-			$body .= '  <p>We just want to take this opportunity to thank you for using this plugin and we hope that you find it useful.</p>';
-			$body .= '  <p>All the best, the <strong>Better Security</strong> team</p>';
+			$body .= '  <p>' . __('If you recognise this change as one that you made then please ignore this email.  However, you may want to investigate to be sure that you are happy with the change that has been made.', 'better-detect-text') . '</p>';
+			$body .= '  <p>' . __('We just want to take this opportunity to thank you for using this plugin and we hope that you find it useful.', 'better-detect-text') . '</p>';
+			$body .= '  <p>' . __('All the best, the <strong>Better Security</strong> team', 'better-detect-text') . '</p>';
 
       //send HTML email
 			add_filter('wp_mail_content_type','better_detection_set_html_mail_content_type');
-			wp_mail($value,"ALERT from Better Detection - $link",$body);
+			wp_mail($value, __('ALERT from Better Detection', 'better-detect-text') . ' - $link',$body);
 			remove_filter('wp_mail_content_type','better_detection_set_html_mail_content_type');
 		}
 	}
@@ -248,7 +248,7 @@ function better_detection_do_notify($type,$item_id) {
 					$item = get_post($item_id);
 				  $text = $item->post_type;
 					$atts = array([
-		        'fallback' => 'ALERT from <' . $home . '|' . $link . '> - change detected to ' . $item->post_type . ' <' . get_permalink($item_id) . '|' . $item->post_title . '>',
+		        'fallback' => __('ALERT from', 'better-detect-text') . ' <' . $home . '|' . $link . '> - ' . __('change detected to', 'better-detect-text') . ' ' . $item->post_type . ' <' . get_permalink($item_id) . '|' . $item->post_title . '>',
 		        'color' => '#000000',
 						'title' => $item->post_title,
             'title_link' => get_permalink($item_id),
@@ -256,22 +256,22 @@ function better_detection_do_notify($type,$item_id) {
 						'footer_icon' => 'https://bettersecurity.co/images/icon-48x48.png',
 		        'fields' => array(
 		          [
-                'title' => 'ID',
+                'title' => __('ID', 'better-detect-text'),
                 'value' => $item->ID,
                 'short' => true
 		          ],
 							[
-								'title' => 'Post Date',
+								'title' => __('Post Date', 'better-detect-text'),
 								'value' => date($frmt, strtotime($item->post_date)),
 								'short' => true
 							],
 		          [
-                'title' => 'Status',
+                'title' => __('Status', 'better-detect-text'),
                 'value' => ucwords($item->post_status),
                 'short' => true
 		          ],
 							[
-								'title' => 'Last Modified',
+								'title' => __('Last Modified', 'better-detect-text'),
 								'value' => date($frmt, strtotime($item->post_modified)),
 								'short' => true
 							]
@@ -279,7 +279,7 @@ function better_detection_do_notify($type,$item_id) {
 		      ]);
 					break;
 				default:
-          $text = $type . ' (ID: ' . $item_id . ')';
+          $text = $type . ' (' . __('ID', 'better-detect-text') . ': ' . $item_id . ')';
 					$atts = array();
 			}
 
@@ -287,7 +287,7 @@ function better_detection_do_notify($type,$item_id) {
       wp_remote_post($value,array(
 				'blocking' => false,
 				'body' => json_encode(array(
-					'text' => 'ALERT from <' . $home . '|' . $link . '> - change detected to ' . $text . '.  If this is not expected, please investigate.',
+					'text' => __('ALERT from', 'better-detect-text') . ' <' . $home . '|' . $link . '> - ' . __('change detected to', 'better-detect-text') . ' ' . $text . '.  ' . __('If this is not expected, please investigate.', 'better-detect-text'),
 					'username' => 'Better Detection',
 					'icon_url' => 'https://bettersecurity.co/images/icon-48x48.png',
 					'attachments' => $atts
@@ -316,7 +316,7 @@ function better_detection_updated_messages($messages) {
 
 	//append tagline to all messages
   $type = $post->post_type;
-  $mess = " <img src='" . plugins_url('icon-36x36.png', __FILE__) . "' align='top' style='height:18px;margin:0 4px 0 18px;'>Protected by <strong>Better Detection</stong>";
+  $mess = " <img src='" . plugins_url('icon-36x36.png', __FILE__) . "' align='top' style='height:18px;margin:0 4px 0 18px;'>" . __('Protected by', 'better-detect-text') . " <strong>Better Detection</stong>";
 	for($i=1;$i<11;$i++) {
 		$messages[$type][$i] .= $mess;
 	}
@@ -472,11 +472,11 @@ function better_detection_show_settings() {
   echo '    <a href="https://www.php.net/supported-versions.php" target="_blank"><img src="' . better_detection_badge_php() . '"></a>';
   echo '  </div>';
   echo '  <h1>' . __('Better Detection', 'better-detect-text') . '</h1>';
-	echo '  <p>This plugin will create and store hashes of content (eg. posts, pages, etc.) and monitor these moving forwards in order to detect when changes occur.  When changes are made outside of the normal working process, such as a direct database update, this will then be detected as the hash will get out of sync with the content.';
+	echo '  <p>' . __('This plugin will create and store hashes of content (eg. posts, pages, etc.) and monitor these moving forwards in order to detect when changes occur.  When changes are made outside of the normal working process, such as a direct database update, this will then be detected as the hash will get out of sync with the content.', 'better-detect-text');
   echo '  <div id="better-detection-tabs">';
   echo '    <ul>';
-  echo '      <li><a href="#better-detection-tabs-errors">Errors<span id="better-detection-error-count"></span></a></li>';
-  echo '      <li><a href="#better-detection-tabs-settings">Options</a></li>';
+  echo '      <li><a href="#better-detection-tabs-errors">' . __('Errors', 'better-detect-text') . '<span id="better-detection-error-count"></span></a></li>';
+  echo '      <li><a href="#better-detection-tabs-settings">' . __('Settings', 'better-detect-text') . '</a></li>';
   //echo '      <li><a href="#better-detection-tabs-extras">Extras</a></li>';
   echo '    </ul>';
   echo '    <div id="better-detection-tabs-errors">';
@@ -487,14 +487,14 @@ function better_detection_show_settings() {
 		echo '    	<table class="wp-list-table widefat striped">';
 		echo '      	<thead>';
 		echo '        	<tr>';
-		echo '    		    <th scope="col" id="better-detection-type" class="manage-column column-name column-primary">Type</th>';
-		echo '            <th scope="col" id="better-detection-desc" class="manage-column column-description">Title</th>';
-		echo '    		    <th scope="col" id="better-detection-indx" class="manage-column column-index">ID</th>';
-		echo '    		    <th scope="col" id="better-detection-stat" class="manage-column column-status">Status</th>';
-		echo '    		    <th scope="col" id="better-detection-cred" class="manage-column column-datetime">Created</th>';
-		echo '    		    <th scope="col" id="better-detection-modd" class="manage-column column-datetime">Modified</th>';
-		echo '    		    <th scope="col" id="better-detection-detd" class="manage-column column-datetime">Change Detected</th>';
-		echo '    		    <th scope="col" id="better-detection-actn" class="manage-column column-actions">Action</th>';
+		echo '    		    <th scope="col" id="better-detection-type" class="manage-column column-name column-primary">' . __('Type', 'better-detect-text') . '</th>';
+		echo '            <th scope="col" id="better-detection-desc" class="manage-column column-description">' . __('Title', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" id="better-detection-indx" class="manage-column column-index">' . __('ID', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" id="better-detection-stat" class="manage-column column-status">' . __('Status', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" id="better-detection-cred" class="manage-column column-datetime">' . __('Created', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" id="better-detection-modd" class="manage-column column-datetime">' . __('Modified', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" id="better-detection-detd" class="manage-column column-datetime">' . __('Change Detected', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" id="better-detection-actn" class="manage-column column-actions">' . __('Action', 'better-detect-text') . '</th>';
 		echo '         </tr>';
 		echo '      	</thead>';
 	  echo '        <tbody id="better-detection-list">';
@@ -503,7 +503,7 @@ function better_detection_show_settings() {
 		foreach($rows as $row) {
 			if($row->post_id) {
 				$item = get_post($row->post_id);
-				$type = ucwords($item->post_type);
+				$type = __(ucwords($item->post_type), 'better-detect-text');
 				$desc = '<a href="' . get_permalink($item->ID) . '" target="blank">' . $item->post_title . ' <span class="dashicons dashicons-external"></span></a>';
 				$indx = $item->ID;
 				$stat = ucwords($item->post_status);
@@ -511,7 +511,7 @@ function better_detection_show_settings() {
 				$modd = date($frmt, strtotime($item->post_modified));
 			}
 			else {
-				$type = "File";
+				$type = __('File', 'better-detect-text');
 				$desc = $row->filename;
 				$indx = "";
 				$stat = ""; //added/updated/deleted?
@@ -527,28 +527,28 @@ function better_detection_show_settings() {
 			echo '            <td class="column-datetime">' . $modd . '</td>';
 			echo '            <td class="column-datetime">' . date($frmt, strtotime($row->error_date)) . '</td>';
 			echo '            <td class="column-actions">';
-			echo '              <input type="button" id="action-fix-' . $row->error_id . '" class="button button-primary action-fixed" value="Fixed">';
-			echo '              <input type="button" id="action-ign-' . $row->error_id . '" class="button button-secondary action-ignore" value="Ignore">';
+			echo '              <input type="button" id="action-fix-' . $row->error_id . '" class="button button-primary action-fixed" value="' . __('Fixed', 'better-detect-text') . '">';
+			echo '              <input type="button" id="action-ign-' . $row->error_id . '" class="button button-secondary action-ignore" value="' . __('Ignore', 'better-detect-text') . '">';
 			echo '            </td>';
 			echo '          </tr>';
 		}
 		echo '        </tbody>';
 		echo '      	<tfoot>';
 		echo '        	<tr>';
-		echo '    		    <th scope="col" class="manage-column column-name column-primary">Type</th>';
-		echo '            <th scope="col" class="manage-column column-description">Title</th>';
-		echo '    		    <th scope="col" class="manage-column column-index">ID</th>';
-		echo '    		    <th scope="col" class="manage-column column-status">Status</th>';
-		echo '    		    <th scope="col" class="manage-column column-datetime">Created</th>';
-		echo '    		    <th scope="col" class="manage-column column-datetime">Modified</th>';
-		echo '    		    <th scope="col" class="manage-column column-datetime">Change Detected</th>';
-		echo '    		    <th scope="col" class="manage-column column-actions">Action</th>';
+		echo '    		    <th scope="col" class="manage-column column-name column-primary">' . __('Type', 'better-detect-text') . '</th>';
+		echo '            <th scope="col" class="manage-column column-description">' . __('Title', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" class="manage-column column-index">' . __('ID', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" class="manage-column column-status">' . __('Status', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" class="manage-column column-datetime">' . __('Created', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" class="manage-column column-datetime">' . __('Modified', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" class="manage-column column-datetime">' . __('Change Detected', 'better-detect-text') . '</th>';
+		echo '    		    <th scope="col" class="manage-column column-actions">' . __('Action', 'better-detect-text') . '</th>';
 		echo '         </tr>';
 		echo '        </tfoot>';
 		echo '      </table>';
 	}
 	else {
-		echo '      <p>No new errors have been detected - yay!</p>';
+		echo '      <p>' . __('No new errors have been detected - yay!', 'better-detect-text') . '</p>';
 	}
 	echo '    </div>';
 	echo '    <div id="better-detection-tabs-settings">';
@@ -637,7 +637,7 @@ add_action('wp_before_admin_bar_render', 'better_detection_admin_bar_render');
 
 //show settings link
 function better_detection_links($links) {
-	$links[] = sprintf('<a href="%s">%s</a>',admin_url('options-general.php?page=better-detection-settings'),'Settings');
+	$links[] = sprintf('<a href="%s">%s</a>',admin_url('options-general.php?page=better-detection-settings'), __('Settings', 'better-detect-text'));
 	return $links;
 }
 
