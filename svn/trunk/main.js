@@ -10,7 +10,7 @@ jQuery(function() {
   better_detection_error_count();
 
   //handle button clicks
-  jQuery("#better-detection-tabs-errors").on("click","input",function(e) {
+  jQuery("#better-detection-tabs").on("click","input",function(e) {
     var data = {'action':'better_detection','mode':'unknown','key':ajax_object.key};
     var inp = jQuery(this);
     if(inp.hasClass("action-fixed")) {
@@ -21,10 +21,16 @@ jQuery(function() {
       data.mode = "ignore";
       data.id = inp.attr("id").replace("action-ign-","");
     }
-    if(data.mode!=="unknown" && !isNaN(data.id)) {
-      inp.after("<img src='"+ajax_object.gif+"' style='height:24px'>").hide().siblings("input").hide();
+    if(inp.hasClass("action-test")) {
+      data.val = inp.siblings("input").val();
+      if(data.val) {
+        data.mode = "test";
+        data.id = inp.attr("id").replace("action-tst-","");
+      }
+    }
+    if(data.mode!=="unknown") {
+      inp.after("<img src='"+ajax_object.gif+"' style='height:21px'>").hide().siblings("input[type=button]").hide();
       jQuery.post(ajax_object.url, data, function(response) {
-  			console.log(response);
         if(response==="Success") {
           inp.closest("tr").fadeOut("slow",function() { //remove row
             jQuery(this).remove();

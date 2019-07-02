@@ -297,6 +297,75 @@ function better_detection_do_notify($type,$item_id) {
 	}
 }
 
+function better_detection_do_test($type,$value) {
+	//calculate site domain
+	$link = rtrim(home_url('/','https'),'/');
+	$home = $link;
+	if(strpos($link,'https://')===0) {
+		$link = substr($link,8);
+	}
+	if(strpos($link,'http://')===0) {
+		$link = substr($link,7);
+	}
+	if(strpos($link,'www.')===0) {
+		$link = substr($link,4);
+	}
+  $frmt = get_option('time_format') . ', ' . get_option('date_format');
+
+	//check for email address
+	if($type=="email" && $value!=="") {
+    //create email body
+		$body  = '  <div style="background-color:white;margin:24px 0;">';
+		$body .= '    <a href="https://bettersecurity.co" target="_blank" style="display:inline-block;width:100%;">';
+		$body .= '      <img src="' . plugins_url('header.png', __FILE__) . '" style="height:64px;">';
+		$body .= '    </a>';
+		$body .= '  </div>';
+		$body .= '  <p>' . __('You have the <strong>Better Detection</strong> plugin installed on your Wordpress site and this test notification was triggered.  The details of the test are below:', 'better-detect-text') . '</p>';
+		$body .= '  <p><ul>';
+		$body .= '  <li>' . __('Type', 'better-detect-text') . ': <strong>' . __('Test', 'better-detect-text') . '</strong></li>';
+		$body .= '  <li>' . __('Test Date', 'better-detect-text') . ': <strong>' . current_time($frmt) . '</strong></li>';
+		$body .= '  </ul></p>';
+		$body .= '  <p>' . __('We just want to take this opportunity to thank you for using this plugin and we hope that you find it useful.', 'better-detect-text') . '</p>';
+		$body .= '  <p>' . __('All the best, the <strong>Better Security</strong> team', 'better-detect-text') . '</p>';
+
+    //send HTML email
+		add_filter('wp_mail_content_type','better_detection_set_html_mail_content_type');
+		$boo = wp_mail($value, __('ALERT from Better Detection', 'better-detect-text') . ' - ' . $link,$body);
+		remove_filter('wp_mail_content_type','better_detection_set_html_mail_content_type');
+		return $boo;
+	}
+
+	//check for Slack webhook
+	if($type=="slack" && $value!=="") {
+		//post message to Slack
+	  wp_remote_post($value,array(
+			'blocking' => false,
+			'body' => json_encode(array(
+				'text' => __('ALERT from', 'better-detect-text') . ' <' . $home . '|' . $link . '> - ' . __('test notification. Has it worked?', 'better-detect-text'),
+				'username' => 'Better Detection',
+				'icon_url' => 'https://bettersecurity.co/images/icon-48x48.png',
+				'attachments' => array([
+		      'fallback' => __('ALERT from', 'better-detect-text') . ' <' . $home . '|' . $link . '> - ' . __('test notification. Has it worked?', 'better-detect-text'),
+		      'color' => '#000000',
+					'footer' => 'Better Security',
+					'footer_icon' => 'https://bettersecurity.co/images/icon-48x48.png',
+					'fields' => array(
+						[
+							'title' => __('Test Date', 'better-detect-text'),
+							'value' => current_time($frmt),
+							'short' => true
+						]
+					)
+		    ])
+			))
+		));
+		return true;
+	}
+
+  //no test notification sent
+	return false;
+}
+
 //set email as HTML
 function better_detection_set_html_mail_content_type() {
 	return 'text/html';
@@ -375,41 +444,57 @@ function better_detection_do_ajax() {
 
   //check security key
 	if(check_ajax_referer('better-detection-nonce', 'key', false)) {
-    //check mode
-		$mode = sanitize_text_field($_POST['mode']);
-    switch($mode) {
-      case "fixed":
-				$res = $wpdb->replace($errors,
-					array(
-						'error_id' => sanitize_text_field($_POST['id']),
-						'fixed_date' => date("Y-m-d H:i:s"),
-						'fixed_mode' => 'fixed'
-					)
-				);
-				if($res===false) {
-					echo "Error: Update failed";
-				}
-				else {
-					echo "Success";
-				}
-				break;
-			case "ignore":
-				$res = $wpdb->replace($errors,
-					array(
-						'error_id' => sanitize_text_field($_POST['id']),
-						'fixed_date' => date("Y-m-d H:i:s"),
-						'fixed_mode' => 'ignore'
-					)
-				);
-				if($res===false) {
-					echo "Error: Update failed";
-				}
-				else {
-					echo "Success";
-				}
-				break;
-			default:
-			  echo "Error: Invalid mode";
+    //check id is populated
+		$id = sanitize_text_field($_POST['id']);
+		if($id) {
+			//check mode
+			$mode = sanitize_text_field($_POST['mode']);
+	    switch($mode) {
+	      case "fixed":
+					$res = $wpdb->replace($errors,
+						array(
+							'error_id' => $id,
+							'fixed_date' => date("Y-m-d H:i:s"),
+							'fixed_mode' => 'fixed'
+						)
+					);
+					if($res===false) {
+						echo "Error: Update failed";
+					}
+					else {
+						echo "Success";
+					}
+					break;
+				case "ignore":
+					$res = $wpdb->replace($errors,
+						array(
+							'error_id' => $id,
+							'fixed_date' => date("Y-m-d H:i:s"),
+							'fixed_mode' => 'ignore'
+						)
+					);
+					if($res===false) {
+						echo "Error: Update failed";
+					}
+					else {
+						echo "Success";
+					}
+					break;
+	      case "test":
+				  $val = sanitize_text_field($_POST['val']);
+					if($val) {
+	          better_detection_do_test($id,$val);
+					}
+					else {
+						echo "Error: Value missing";
+					}
+	        break;
+				default:
+				  echo "Error: Invalid mode";
+			}
+		}
+		else {
+			echo "Error: ID missing";
 		}
   }
 	else {
@@ -595,7 +680,7 @@ function better_detection_notify_email() {
 	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
 		$value = $settings['better-detection-notify-email'];
 	}
-  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-email]" type="email" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
+  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-email]" type="email" size="50" value="' . str_replace('"', '&quot;', $value) . '"> <input type="button" id="action-tst-email" class="button button-secondary action-test" value="' . __('Send test', 'better-detect-text') . '">';
 }
 
 function better_detection_notify_slack() {
@@ -604,7 +689,7 @@ function better_detection_notify_slack() {
 	if(isset($settings['better-detection-notify-slack']) && $settings['better-detection-notify-slack']!=="") {
 		$value = $settings['better-detection-notify-slack'];
 	}
-  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-slack]" type="url" size="50" value="' . str_replace('"', '&quot;', $value) . '">';
+  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-slack]" type="url" size="50" value="' . str_replace('"', '&quot;', $value) . '"> <input type="button" id="action-tst-slack" class="button button-secondary action-test" value="' . __('Send test', 'better-detect-text') . '">';
 	echo '<br><small><em>See Slack\'s <a href="https://slack.com/services/new/incoming-webhook">Channel Settings &gt; Add an App &gt; Incoming WebHooks</a> menu.</em></small>';
 }
 
