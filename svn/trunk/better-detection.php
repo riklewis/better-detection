@@ -199,6 +199,19 @@ function better_detection_do_notify($type,$item_id) {
 	}
 	$frmt = get_option('time_format') . ', ' . get_option('date_format');
 
+	//create and store unique
+	$guid = "";
+	$auto = "";
+	if(isset($settings['better-detection-notify-login']) && $settings['better-detection-notify-login']!=="") {
+		$login = $settings['better-detection-notify-login'];
+		if($login!=="") {
+			$used = false;
+			$guid = better_detection_guid();
+			$auto = $home . '?token=' . $guid;
+			set_transient("better_detection_auto_login_" . $guid, $login, DAY_IN_SECONDS);
+		}
+	}
+
 	//check for email address
 	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
 		$value = $settings['better-detection-notify-email'];
@@ -227,6 +240,10 @@ function better_detection_do_notify($type,$item_id) {
 			}
 			$body .= '  </ul></p>';
 			$body .= '  <p>' . __('If you recognise this change as one that you made then please ignore this email.  However, you may want to investigate to be sure that you are happy with the change that has been made.', 'better-detect-text') . '</p>';
+			if($auto!=="") {
+			  $body .= '  <p><a href="' . $auto . '">' . __('Click here to automatically log in to the dashboard', 'better-detect-text') . '</a>. <em>' . __('This is a single use link that expires in 24 hours', 'better-detect-text') . '.</em></p>';
+				$used = true;
+			}
 			$body .= '  <p>' . __('We just want to take this opportunity to thank you for using this plugin and we hope that you find it useful.', 'better-detect-text') . '</p>';
 			$body .= '  <p>' . __('All the best, the <strong>Better Security</strong> team', 'better-detect-text') . '</p>';
 
@@ -274,9 +291,15 @@ function better_detection_do_notify($type,$item_id) {
 								'title' => __('Last Modified', 'better-detect-text'),
 								'value' => date($frmt, strtotime($item->post_modified)),
 								'short' => true
+							],
+							[
+								'title' => __('Dashboard Link', 'better-detect-text'),
+								'value' => '<' . $auto . '|' . __('Click here to automatically log in to the dashboard', 'better-detect-text') . '>',
+								'short' => false
 							]
 		        )
 		      ]);
+					$used = true;
 					break;
 				default:
           $text = $type . ' (' . __('ID', 'better-detect-text') . ': ' . $item_id . ')';
@@ -295,9 +318,16 @@ function better_detection_do_notify($type,$item_id) {
 			));
 		}
 	}
+
+	//remove unique ID if not used
+	if($guid!=="" && !$used) {
+		delete_transient("better_detection_auto_login_" . $guid);
+	}
 }
 
 function better_detection_do_test($type,$value) {
+	$settings = get_option('better-detection-settings');
+
 	//calculate site domain
 	$link = rtrim(home_url('/','https'),'/');
 	$home = $link;
@@ -312,6 +342,19 @@ function better_detection_do_test($type,$value) {
 	}
   $frmt = get_option('time_format') . ', ' . get_option('date_format');
 
+	//create and store unique
+	$guid = "";
+	$auto = "";
+	if(isset($settings['better-detection-notify-login']) && $settings['better-detection-notify-login']!=="") {
+		$login = $settings['better-detection-notify-login'];
+		if($login!=="") {
+			$used = false;
+			$guid = better_detection_guid();
+			$auto = $home . '?token=' . $guid;
+			set_transient("better_detection_auto_login_" . $guid, $login, DAY_IN_SECONDS);
+		}
+	}
+
 	//check for email address
 	if($type=="email" && $value!=="") {
     //create email body
@@ -325,6 +368,10 @@ function better_detection_do_test($type,$value) {
 		$body .= '  <li>' . __('Type', 'better-detect-text') . ': <strong>' . __('Test', 'better-detect-text') . '</strong></li>';
 		$body .= '  <li>' . __('Test Date', 'better-detect-text') . ': <strong>' . current_time($frmt) . '</strong></li>';
 		$body .= '  </ul></p>';
+		if($auto!=="") {
+			$body .= '  <p><a href="' . $auto . '">' . __('Click here to automatically log in to the dashboard', 'better-detect-text') . '</a>. <em>' . __('This is a single use link that expires in 24 hours', 'better-detect-text') . '.</em></p>';
+			$used = true;
+		}
 		$body .= '  <p>' . __('We just want to take this opportunity to thank you for using this plugin and we hope that you find it useful.', 'better-detect-text') . '</p>';
 		$body .= '  <p>' . __('All the best, the <strong>Better Security</strong> team', 'better-detect-text') . '</p>';
 
@@ -354,6 +401,11 @@ function better_detection_do_test($type,$value) {
 							'title' => __('Test Date', 'better-detect-text'),
 							'value' => current_time($frmt),
 							'short' => true
+						],
+						[
+							'title' => __('Dashboard Link', 'better-detect-text'),
+							'value' => '<' . $auto . '|' . __('Click here to automatically log in to the dashboard', 'better-detect-text') . '>',
+							'short' => false
 						]
 					)
 		    ])
@@ -362,7 +414,10 @@ function better_detection_do_test($type,$value) {
 		return true;
 	}
 
-  //no test notification sent
+	//remove unique ID if not used
+	if($guid!=="" && !$used) {
+		delete_transient("better_detection_auto_login_" . $guid);
+	}
 	return false;
 }
 
@@ -433,6 +488,52 @@ function better_detection_log($message) {
     }
   }
 }
+
+/*
+------------------------- Automatic Login ---------------------------
+*/
+
+//create GUID-ish
+function better_detection_guid() {
+	return rtrim(strtr(base64_encode(rand() . uniqid('',true)), '+/', '-_'), '=');
+}
+
+//handle login request
+function better_detection_auto_login() {
+  if(isset($_GET['token']) && $_GET['token']!=="") {
+    $token = $_GET['token'];
+
+		//check token is genuine and hasn't expired
+		$login = get_transient("better_detection_auto_login_" . $token);
+		if($login!==false && $login!=="") {
+
+			//get user that this token was created for
+      $user = get_user_by('id', intval($login));
+      if($user) {
+
+				//log that user in
+				wp_set_auth_cookie($user->ID, false);
+				do_action('wp_login', $user->name, $user);
+
+				//link only works once
+				delete_transient("better_detection_auto_login_" . $token);
+
+        //redirect to settings page
+				header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+				header("Cache-Control: no-cache, no-store, must-revalidate, private, max-age=0, s-maxage=0");
+				header("Cache-Control: post-check=0, pre-check=0", false);
+				header("Pragma: no-cache");
+				header("Expires: Mon, 01 Jan 1990 01:00:00 GMT");
+				wp_redirect(admin_url('options-general.php') . '?page=better-detection-settings');
+				exit;
+		  }
+		}
+
+		//token hasn't worked but just to be safe
+		delete_transient("better_detection_auto_login_" . $token);
+	}
+}
+add_action('init', 'better_detection_auto_login');
 
 /*
 -------------------------- AJAX Functions ---------------------------
@@ -539,12 +640,14 @@ function better_detection_settings() {
   add_settings_section('better-detection-section-notify', __('Notifications', 'better-detect-text'), 'better_detection_section_notify', 'better-detection');
   add_settings_field('better-detection-notify-email', __('Email Address', 'better-detect-text'), 'better_detection_notify_email', 'better-detection', 'better-detection-section-notify');
   add_settings_field('better-detection-notify-slack', __('Slack WebHook URL', 'better-detect-text'), 'better_detection_notify_slack', 'better-detection', 'better-detection-section-notify');
+  add_settings_field('better-detection-notify-login', __('Automatic Login Link', 'better-detect-text'), 'better_detection_notify_login', 'better-detection', 'better-detection-section-notify');
 }
 
 //allow the settings to be stored
 add_filter('whitelist_options', function($whitelist_options) {
   $whitelist_options['better-detection'][] = 'better-detection-notify-email';
   $whitelist_options['better-detection'][] = 'better-detection-notify-slack';
+  $whitelist_options['better-detection'][] = 'better-detection-notify-login';
   return $whitelist_options;
 });
 
@@ -680,7 +783,7 @@ function better_detection_notify_email() {
 	if(isset($settings['better-detection-notify-email']) && $settings['better-detection-notify-email']!=="") {
 		$value = $settings['better-detection-notify-email'];
 	}
-  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-email]" type="email" size="50" value="' . str_replace('"', '&quot;', $value) . '"> <input type="button" id="action-tst-email" class="button button-secondary action-test" value="' . __('Send test', 'better-detect-text') . '">';
+  echo '<input id="better-detection-notify-email" name="better-detection-settings[better-detection-notify-email]" type="email" size="50" value="' . str_replace('"', '&quot;', $value) . '"> <input type="button" id="action-tst-email" class="button button-secondary action-test" value="' . __('Send test', 'better-detect-text') . '">';
 }
 
 function better_detection_notify_slack() {
@@ -689,8 +792,29 @@ function better_detection_notify_slack() {
 	if(isset($settings['better-detection-notify-slack']) && $settings['better-detection-notify-slack']!=="") {
 		$value = $settings['better-detection-notify-slack'];
 	}
-  echo '<input id="better-detection" name="better-detection-settings[better-detection-notify-slack]" type="url" size="50" value="' . str_replace('"', '&quot;', $value) . '"> <input type="button" id="action-tst-slack" class="button button-secondary action-test" value="' . __('Send test', 'better-detect-text') . '">';
+	echo '<input id="better-detection-notify-slack" name="better-detection-settings[better-detection-notify-slack]" type="url" size="50" value="' . str_replace('"', '&quot;', $value) . '"> <input type="button" id="action-tst-slack" class="button button-secondary action-test" value="' . __('Send test', 'better-detect-text') . '">';
 	echo '<br><small><em>See Slack\'s <a href="https://slack.com/services/new/incoming-webhook">Channel Settings &gt; Add an App &gt; Incoming WebHooks</a> menu.</em></small>';
+}
+
+function better_detection_notify_login() {
+	$settings = get_option('better-detection-settings');
+	$value = "";
+	if(isset($settings['better-detection-notify-login']) && $settings['better-detection-notify-login']!=="") {
+		$value = $settings['better-detection-notify-login'];
+	}
+	echo '<select id="better-detection-notify-login" name="better-detection-settings[better-detection-notify-login]">';
+	echo better_detection_login_option('',$value,'-- Do not include a login link -- ');
+	$users = get_users();
+  foreach($users as $user) {
+		$meta = get_user_meta($user->ID);
+		echo better_detection_login_option(strval($user->ID), $value, 'Log in as: ' . $user->user_login);
+  }
+	echo '</select>';
+	echo '<br><small><em>Please note that no password will be required so keep these links private.</em></small>';
+}
+
+function better_detection_login_option($opt,$val,$txt) {
+  return '  <option value="' . $opt . '"' . ($opt===$val ? ' selected' : '') . '>' . $txt . '</option>';
 }
 
 //add actions
