@@ -123,9 +123,26 @@ function better_detection_do_hourly() {
   }
 	$out_plugins = array();
   $all_plugins = get_plugins();
-	foreach($all_plugins as $key => $val) {
-		$out_plugins[$key] = $val["Version"];
+	foreach($all_plugins as $key => $plugin) {
+		$out_plugins[$key] = $plugin["Version"];
 	}
+
+	//themes to check
+	if(!function_exists('wp_get_themes')) {
+	  require_once ABSPATH . 'wp-admin/includes/theme.php';
+  }
+	$out_themes = array();
+	$all_themes = wp_get_themes();
+	foreach ($all_themes as $key => $theme) {
+    $out_themes[$key] = $theme->get("Version");
+  }
+
+	//build up post data
+	$post_data = array();
+	$post_data["core"] = bloginfo('version');
+	$post_data["themes"] = $out_themes;
+	$post_data["plugins"] = $out_plugins;
+
 
 	// TODO:
 
