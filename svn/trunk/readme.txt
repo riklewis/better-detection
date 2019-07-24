@@ -1,6 +1,6 @@
 === Better Detection ===
 Contributors: bettersecurity, riklewis
-Tags: better, security, detection, content, files
+Tags: better, better, security, detection, content, files, core, themes, plugins, updates, scanner
 Requires at least: 3.5
 Tested up to: 5.2
 Stable tag: trunk

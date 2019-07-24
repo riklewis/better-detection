@@ -19,6 +19,7 @@ defined('ABSPATH') or die('Forbidden');
 */
 
 define('BETTER_DETECTION_VERSION','1.3');
+define('BETTER_SECURITY_API','https://bettersecurity.co/wp-json/api/v1/');
 
 function better_detection_activation() {
 	global $wpdb;
@@ -115,6 +116,18 @@ function better_detection_do_hourly() {
 	foreach($rows as $row) {
     better_detection_do_post($row,true);
 	}
+
+	//get plugins to check
+	if(!function_exists('get_plugins')) {
+	  require_once ABSPATH . 'wp-admin/includes/plugin.php';
+  }
+	$out_plugins = array();
+  $all_plugins = get_plugins();
+	foreach($all_plugins as $key => $val) {
+		$out_plugins[$key] = $val["Version"];
+	}
+
+	// TODO:
 
 	//update options
 	update_option('better_detection_running','N');
