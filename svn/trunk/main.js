@@ -1,6 +1,12 @@
 jQuery(function() {
   //initialise tab widget
-  jQuery("#better-detection-tabs").tabs();
+  jQuery("#better-detection-tabs").tabs({
+    activate: function(event,ui) {
+      var inp = jQuery("[name='_wp_http_referer']");
+      var val = inp.val().split("#")[0];
+      inp.val(val+"#"+ui.newPanel.attr("id"));
+    }
+  });
 
   //update error count
   function better_detection_error_count() {
