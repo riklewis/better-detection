@@ -2,7 +2,7 @@
 /*
 Plugin Name:  Better Detection
 Description:  Improve the security of your website by detecting unexpected changes to both content
-Version:      1.3
+Version:      1.4
 Author:       Better Security
 Author URI:   https://bettersecurity.co
 License:      GPL3
