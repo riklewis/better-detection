@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name:  Better Detection
-Description:  Improve the security of your website by detecting unexpected changes to both content
+Description:  Improve the security of your website by detecting unexpected changes to content, plugins and themes
 Version:      1.4
 Author:       Better Security
 Author URI:   https://bettersecurity.co
@@ -729,6 +729,7 @@ function better_detection_show_settings() {
   echo '  </div>';
   echo '  <h1>' . __('Better Detection', 'better-detect-text') . '</h1>';
 	echo '  <p>' . __('This plugin will create and store hashes of content (eg. posts, pages, etc.) and monitor these moving forwards in order to detect when changes occur.  When changes are made outside of the normal working process, such as a direct database update, this will then be detected as the hash will get out of sync with the content.', 'better-detect-text');
+	echo '  <p>' . __('This plugin will check plugins and themes against known lists of vulnerabilities in order to notify you when you need to upgrade due to a specific security risk.', 'better-detect-text');
   echo '  <div id="better-detection-tabs">';
   echo '    <ul>';
   echo '      <li><a href="#better-detection-tabs-errors">' . __('Errors', 'better-detect-text') . '<span id="better-detection-error-count"></span></a></li>';
