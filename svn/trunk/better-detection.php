@@ -117,34 +117,48 @@ function better_detection_do_hourly() {
     better_detection_do_post($row,true);
 	}
 
-	//get plugins to check
-	if(!function_exists('get_plugins')) {
-	  require_once ABSPATH . 'wp-admin/includes/plugin.php';
-  }
-	$out_plugins = array();
-  $all_plugins = get_plugins();
-	foreach($all_plugins as $key => $plugin) {
-		$out_plugins[$key] = $plugin["Version"];
+  //get API key
+	$settings = get_option('better-detection-settings');
+	if(isset($settings['better-detection-vulns-key']) && $settings['better-detection-vulns-key']!=="") {
+		$token = $settings['better-detection-vulns-key'];
+
+		//get plugins to check
+		$out_plugins = array();
+		if(isset($settings['better-detection-vulns-plugin']) && $settings['better-detection-vulns-plugin']!=="YES") {
+			if(!function_exists('get_plugins')) {
+			  require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		  }
+		  $all_plugins = get_plugins();
+			foreach($all_plugins as $key => $plugin) {
+				$out_plugins[$key] = $plugin["Version"];
+			}
+		}
+
+		//themes to check
+		$out_themes = array();
+		if(isset($settings['better-detection-vulns-themes']) && $settings['better-detection-vulns-themes']!=="YES") {
+			if(!function_exists('wp_get_themes')) {
+			  require_once ABSPATH . 'wp-admin/includes/theme.php';
+		  }
+			$all_themes = wp_get_themes();
+			foreach ($all_themes as $key => $theme) {
+		    $out_themes[$key] = $theme->get("Version");
+		  }
+		}
+
+		//build up post data and post
+		$post_data = array();
+		$post_data["core"] = bloginfo('version');
+		$post_data["themes"] = $out_themes;
+		$post_data["plugins"] = $out_plugins;
+		$response = wp_safe_remote_post($api . "vulns/", array(
+			'blocking' => true,
+			'headers' => array('Authorization' => 'Token token=' . $token),
+			'body' => json_encode($post_data)
+		));
+
+		// TODO: handle response
 	}
-
-	//themes to check
-	if(!function_exists('wp_get_themes')) {
-	  require_once ABSPATH . 'wp-admin/includes/theme.php';
-  }
-	$out_themes = array();
-	$all_themes = wp_get_themes();
-	foreach ($all_themes as $key => $theme) {
-    $out_themes[$key] = $theme->get("Version");
-  }
-
-	//build up post data
-	$post_data = array();
-	$post_data["core"] = bloginfo('version');
-	$post_data["themes"] = $out_themes;
-	$post_data["plugins"] = $out_plugins;
-
-
-	// TODO:
 
 	//update options
 	update_option('better_detection_running','N');
@@ -676,7 +690,12 @@ function better_detection_menus() {
 function better_detection_settings() {
 	register_setting('better-detection','better-detection-settings');
 
-  add_settings_section('better-detection-section-notify', __('Notifications', 'better-detect-text'), 'better_detection_section_notify', 'better-detection');
+  add_settings_section('better-detection-section-vulns', __('Vulnerabilities', 'better-detect-text'), 'better_detection_section_vulns', 'better-detection');
+  add_settings_field('better-detection-vulns-plugin', __('Check Plugins', 'better-detect-text'), 'better_detection_vulns_plugin', 'better-detection', 'better-detection-section-vulns');
+  add_settings_field('better-detection-vulns-themes', __('Check Themes', 'better-detect-text'), 'better_detection_vulns_themes', 'better-detection', 'better-detection-section-vulns');
+	add_settings_field('better-detection-vulns-key', __('API Key', 'better-detect-text'), 'better_detection_vulns_key', 'better-detection', 'better-detection-section-vulns');
+
+	add_settings_section('better-detection-section-notify', __('Notifications', 'better-detect-text'), 'better_detection_section_notify', 'better-detection');
   add_settings_field('better-detection-notify-email', __('Email Address', 'better-detect-text'), 'better_detection_notify_email', 'better-detection', 'better-detection-section-notify');
   add_settings_field('better-detection-notify-slack', __('Slack WebHook URL', 'better-detect-text'), 'better_detection_notify_slack', 'better-detection', 'better-detection-section-notify');
   add_settings_field('better-detection-notify-login', __('Automatic Login Link', 'better-detect-text'), 'better_detection_notify_login', 'better-detection', 'better-detection-section-notify');
@@ -684,6 +703,9 @@ function better_detection_settings() {
 
 //allow the settings to be stored
 add_filter('whitelist_options', function($whitelist_options) {
+  $whitelist_options['better-detection'][] = 'better-detection-vulns-key';
+  $whitelist_options['better-detection'][] = 'better-detection-vulns-plugin';
+  $whitelist_options['better-detection'][] = 'better-detection-vulns-themes';
   $whitelist_options['better-detection'][] = 'better-detection-notify-email';
   $whitelist_options['better-detection'][] = 'better-detection-notify-slack';
   $whitelist_options['better-detection'][] = 'better-detection-notify-login';
@@ -808,6 +830,40 @@ function better_detection_badge_php() {
     $col = "success";
   }
   return 'https://img.shields.io/badge/PHP-' . $ver . '-' . $col . '.svg?logo=php&style=for-the-badge';
+}
+
+//define output for settings section
+function better_detection_section_vulns() {
+  echo '<hr>';
+}
+
+//defined output for settings
+function better_detection_vulns_key() {
+	$settings = get_option('better-detection-settings');
+	$value = "";
+	if(isset($settings['better-detection-vulns-key']) && $settings['better-detection-vulns-key']!=="") {
+		$value = $settings['better-detection-vulns-key'];
+	}
+  echo '<input id="better-detection-vulns-key" name="better-detection-settings[better-detection-vulns-key]" type="text" size="50" value="' . str_replace('"', '&quot;', $value) . '"> <input type="button" id="action-get-apik" class="button button-secondary action-apik" value="' . __('Get API key', 'better-detect-text') . '"> <span id="vulns-status"></span>';
+	echo '<br><small><em>An API key is required in order to fetch vulnerability data from the server.</em></small>';
+}
+
+function better_detection_vulns_plugin() {
+	$settings = get_option('better-detection-settings');
+	$checked = " checked";
+	if(isset($settings['better-detection-vulns-plugin']) && $settings['better-detection-vulns-plugin']!=="YES") {
+		$checked = "";
+	}
+  echo '<input id="better-detection-vulns-plugin" name="better-detection-settings[better-detection-vulns-plugin]" type="checkbox" value="YES"' . $checked . '>';
+}
+
+function better_detection_vulns_themes() {
+	$settings = get_option('better-detection-settings');
+	$checked = " checked";
+	if(isset($settings['better-detection-vulns-themes']) && $settings['better-detection-vulns-themes']!=="YES") {
+		$checked = "";
+	}
+  echo '<input id="better-detection-vulns-themes" name="better-detection-settings[better-detection-vulns-themes]" type="checkbox" value="YES"' . $checked . '>';
 }
 
 //define output for settings section
