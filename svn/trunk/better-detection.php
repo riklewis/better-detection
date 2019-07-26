@@ -19,7 +19,7 @@ defined('ABSPATH') or die('Forbidden');
 */
 
 define('BETTER_DETECTION_VERSION','1.3');
-define('BETTER_SECURITY_API','https://bettersecurity.co/wp-json/api/v1/');
+define('BETTER_SECURITY_API','https://bettersecurity.co/api/v1/');
 
 function better_detection_activation() {
 	global $wpdb;
