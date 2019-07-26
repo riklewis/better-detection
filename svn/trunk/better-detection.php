@@ -151,7 +151,7 @@ function better_detection_do_hourly() {
 		$post_data["core"] = bloginfo('version');
 		$post_data["themes"] = $out_themes;
 		$post_data["plugins"] = $out_plugins;
-		$response = wp_safe_remote_post($api . "vulns/", array(
+		$response = wp_safe_remote_post(BETTER_SECURITY_API . "vulns/", array(
 			'blocking' => true,
 			'headers' => array('Authorization' => 'Token token=' . $token),
 			'body' => json_encode($post_data)
@@ -846,7 +846,7 @@ function better_detection_vulns_key() {
 		$value = $settings['better-detection-vulns-key'];
 	}
   echo '<input id="better-detection-vulns-key" name="better-detection-settings[better-detection-vulns-key]" type="text" size="50" value="' . str_replace('"', '&quot;', $value) . '"> <input type="button" id="action-get-apik" class="button button-secondary action-apik" value="' . __('Get API key', 'better-detect-text') . '"> <span id="vulns-status"></span>';
-	echo '<br><small><em>An API key is required in order to fetch vulnerability data from the server.</em></small>';
+	echo '<br><small><em>&nbsp;' . __('An API key is required in order to fetch vulnerability data from the server.', 'better-detect-text') . '</em></small>';
 }
 
 function better_detection_vulns_plugin() {
@@ -889,7 +889,7 @@ function better_detection_notify_slack() {
 		$value = $settings['better-detection-notify-slack'];
 	}
 	echo '<input id="better-detection-notify-slack" name="better-detection-settings[better-detection-notify-slack]" type="url" size="50" value="' . str_replace('"', '&quot;', $value) . '"> <input type="button" id="action-tst-slack" class="button button-secondary action-test" value="' . __('Send test', 'better-detect-text') . '">';
-	echo '<br><small><em>See Slack\'s <a href="https://slack.com/services/new/incoming-webhook">Channel Settings &gt; Add an App &gt; Incoming WebHooks</a> menu.</em></small>';
+	echo '<br><small><em>&nbsp;' . __('See Slack\'s', 'better-detect-text') . ' <a href="https://slack.com/services/new/incoming-webhook">' . __('Channel Settings > Add an App > Incoming WebHooks', 'better-detect-text') . '</a> ' . __('menu.', 'better-detect-text') . '</em></small>';
 }
 
 function better_detection_notify_login() {
@@ -899,14 +899,14 @@ function better_detection_notify_login() {
 		$value = $settings['better-detection-notify-login'];
 	}
 	echo '<select id="better-detection-notify-login" name="better-detection-settings[better-detection-notify-login]">';
-	echo better_detection_login_option('',$value,'-- Do not include a login link -- ');
+	echo better_detection_login_option('',$value,'-- ' . __('Do not include a login link', 'better-detect-text') . ' -- ');
 	$users = get_users();
   foreach($users as $user) {
 		$meta = get_user_meta($user->ID);
-		echo better_detection_login_option(strval($user->ID), $value, 'Log in as: ' . $user->user_login);
+		echo better_detection_login_option(strval($user->ID), $value, __('Log in as', 'better-detect-text') . ': ' . $user->user_login);
   }
 	echo '</select>';
-	echo '<br><small><em>Please note that no password will be required so keep these links private.</em></small>';
+	echo '<br><small><em>&nbsp;' . __('Please note that no password will be required so keep these links private.', 'better-detect-text') . '</em></small>';
 }
 
 function better_detection_login_option($opt,$val,$txt) {
