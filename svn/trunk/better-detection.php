@@ -124,7 +124,7 @@ function better_detection_do_hourly() {
 
 		//get plugins to check
 		$out_plugins = array();
-		if(isset($settings['better-detection-vulns-plugin']) && $settings['better-detection-vulns-plugin']!=="YES") {
+		if(!isset($settings['better-detection-vulns-plugin']) || $settings['better-detection-vulns-plugin']==="YES") {
 			if(!function_exists('get_plugins')) {
 			  require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		  }
@@ -136,7 +136,7 @@ function better_detection_do_hourly() {
 
 		//themes to check
 		$out_themes = array();
-		if(isset($settings['better-detection-vulns-themes']) && $settings['better-detection-vulns-themes']!=="YES") {
+		if(!isset($settings['better-detection-vulns-themes']) || $settings['better-detection-vulns-themes']==="YES") {
 			if(!function_exists('wp_get_themes')) {
 			  require_once ABSPATH . 'wp-admin/includes/theme.php';
 		  }
@@ -147,10 +147,15 @@ function better_detection_do_hourly() {
 		}
 
 		//build up post data and post
+		global $wp_version;
 		$post_data = array();
-		$post_data["core"] = bloginfo('version');
+		$post_data["core"] = $wp_version;
 		$post_data["themes"] = $out_themes;
 		$post_data["plugins"] = $out_plugins;
+
+		better_detection_log($post_data); // TODO: remove
+		better_detection_log(json_encode($post_data)); // TODO: remove
+
 		$response = wp_safe_remote_post(BETTER_SECURITY_API . "vulns/", array(
 			'blocking' => true,
 			'headers' => array('Authorization' => 'Token token=' . $token),
