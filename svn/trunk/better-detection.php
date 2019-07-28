@@ -130,6 +130,7 @@ function better_detection_do_hourly() {
 		  }
 		  $all_plugins = get_plugins();
 			foreach($all_plugins as $key => $plugin) {
+			  $key = explode('/', $key)[0];
 				$out_plugins[$key] = $plugin["Version"];
 			}
 		}
@@ -152,11 +153,7 @@ function better_detection_do_hourly() {
 		$post_data["core"] = $wp_version;
 		$post_data["themes"] = $out_themes;
 		$post_data["plugins"] = $out_plugins;
-
-		better_detection_log($post_data); // TODO: remove
-		better_detection_log(json_encode($post_data)); // TODO: remove
-
-		$response = wp_safe_remote_post(BETTER_SECURITY_API . "vulns/", array(
+		$resp = wp_safe_remote_post(BETTER_SECURITY_API . "vulns/", array(
 			'blocking' => true,
 			'headers' => array('Authorization' => 'Token token=' . $token),
 			'body' => json_encode($post_data)
