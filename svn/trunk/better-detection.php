@@ -158,8 +158,14 @@ function better_detection_do_hourly() {
 			'headers' => array('Authorization' => 'Token token=' . $token),
 			'body' => json_encode($post_data)
 		));
+		if(!is_wp_error($resp)) {
+			//get returned data
+			$body = wp_remote_retrieve_body($resp);
+			$json = json_decode($body);
 
-		// TODO: handle response
+      better_detection_log($body); 
+		  // TODO: handle response
+	  }
 	}
 
 	//update options
