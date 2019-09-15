@@ -621,7 +621,7 @@ add_action('wp_ajax_better_detection', 'better_detection_do_ajax');
 */
 
 function better_detection_admin_scripts() {
-	if($_GET["page"]==="better-detection-settings") {
+	if(isset($_GET["page"]) && $_GET["page"]==="better-detection-settings") {
 	  wp_enqueue_script('jquery-ui-core');
 	  wp_enqueue_script('jquery-ui-tabs');
 
