@@ -46,7 +46,7 @@ function better_detection_activation() {
 		new_hash varchar(255) NOT NULL,
 		error_date datetime NOT NULL,
 		fixed_date datetime,
-		fixed_mode varchar(10)
+		fixed_mode varchar(10),
 	  PRIMARY KEY  (error_id)
 	)";
 	better_detection_database($table, $sql);
