@@ -819,7 +819,7 @@ function better_detection_notify_login() {
 		echo better_detection_login_option(strval($user->ID), $value, __('Log in as', 'better-detect-text') . ': ' . $user->user_login);
   }
 	echo '</select>';
-	echo '<br><small><em>&nbsp;' . __('Please note that no password will be required so keep these links private.', 'better-detect-text') . '</em></small>';
+	echo '<br><small><em>&nbsp;' . __('WARNING: No password will be required so keep these links private.', 'better-detect-text') . '</em></small>';
 }
 
 function better_detection_login_option($opt,$val,$txt) {
