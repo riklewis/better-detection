@@ -35,7 +35,7 @@ jQuery(function() {
       }
     }
     if(data.mode!=="unknown") {
-      inp.after("<img src='"+ajax_object.gif+"' style='height:21px'>").hide().siblings("input[type=button]").hide();
+      inp.after("<img src='"+ajax_object.gif+"' class='better-detection-spinner'>").hide().siblings("input[type=button]").hide();
       jQuery.post(ajax_object.url, data, function(response) {
         if(response==="Success") {
           inp.closest("tr").fadeOut("slow",function() { //remove row

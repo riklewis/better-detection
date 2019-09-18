@@ -629,7 +629,7 @@ function better_detection_admin_scripts() {
 		wp_localize_script('better-detection-main-js', 'ajax_object', array(
 			'url' => admin_url('admin-ajax.php'),
 			'key' => wp_create_nonce('better-detection-nonce'),
-			'gif' => plugins_url('working.gif', __FILE__)
+			'gif' => plugins_url('icon-36x36.png', __FILE__),
 		));
 
 		wp_enqueue_style('jquery-ui-tabs-min-css', plugins_url('jquery-ui-tabs.min.css', __FILE__));
