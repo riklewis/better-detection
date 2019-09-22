@@ -249,7 +249,7 @@ function better_detection_do_notify($type,$item_id) {
 
       //send HTML email
 			add_filter('wp_mail_content_type','better_detection_set_html_mail_content_type');
-			wp_mail($value, __('ALERT from Better Detection', 'better-detect-text') . ' - $link',$body);
+			wp_mail($value, __('ALERT from Better Detection', 'better-detect-text') . ' - ' . $link, $body);
 			remove_filter('wp_mail_content_type','better_detection_set_html_mail_content_type');
 		}
 	}
