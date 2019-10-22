@@ -456,7 +456,7 @@ function better_detection_updated_messages($messages) {
 
 	//append tagline to all messages
   $type = $post->post_type;
-  $mess = " <img src='" . plugins_url('icon-36x36.png', __FILE__) . "' align='top' style='height:18px;margin:0 4px 0 18px;'>" . __('Protected by', 'better-detect-text') . " <strong>Better Detection</stong>";
+  $mess = " <img src='" . plugins_url('icon-36x36.png', __FILE__) . "' align='top' style='height:18px;margin:0 4px 0 18px;'>" . __('Protected by', 'better-detect-text') . " <strong>Better Detection</strong>";
 	for($i=1;$i<11;$i++) {
 		$messages[$type][$i] .= $mess;
 	}
