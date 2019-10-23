@@ -2,7 +2,7 @@
 Contributors: bettersecurity, riklewis
 Tags: better, better, security, detection, content, scanner
 Requires at least: 3.5
-Tested up to: 5.2
+Tested up to: 5.3
 Stable tag: trunk
 Requires PHP: 5.6
 License: GPLv3
