@@ -561,11 +561,13 @@ function better_detection_do_ajax() {
 			$mode = sanitize_text_field($_POST['mode']);
 	    switch($mode) {
 	      case "fixed":
-					$res = $wpdb->replace($errors,
+					$res = $wpdb->update($errors,
 						array(
-							'error_id' => $id,
 							'fixed_date' => date("Y-m-d H:i:s"),
 							'fixed_mode' => 'fixed'
+						),
+						array(
+							'error_id' => $id
 						)
 					);
 					if($res===false) {
@@ -576,11 +578,13 @@ function better_detection_do_ajax() {
 					}
 					break;
 				case "ignore":
-					$res = $wpdb->replace($errors,
+					$res = $wpdb->update($errors,
 						array(
-							'error_id' => $id,
 							'fixed_date' => date("Y-m-d H:i:s"),
 							'fixed_mode' => 'ignore'
+						),
+						array(
+							'error_id' => $id
 						)
 					);
 					if($res===false) {
