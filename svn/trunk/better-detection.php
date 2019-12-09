@@ -2,7 +2,7 @@
 /*
 Plugin Name:  Better Detection
 Description:  Improve the security of your website by detecting unexpected changes to content
-Version:      1.4
+Version:      1.5
 Author:       Better Security
 Author URI:   https://bettersecurity.co
 License:      GPL3
@@ -930,7 +930,7 @@ function better_detection_meta($links, $file) {
 //add actions
 if(is_admin()) {
   add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'better_detection_links');
-	//add_filter('plugin_row_meta', 'better_detection_meta', 10, 2);
+	add_filter('plugin_row_meta', 'better_detection_meta', 10, 2);
 }
 
 /*
